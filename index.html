@@ -1,0 +1,2075 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculator Ultra</title>
+<meta name="description" content="Colourful calculators: everyday, scientific, discount, percentage, loans, units, land and gold.">
+<meta name="theme-color" content="#e6f1ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Calc Ultra">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="gf" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap">
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+/* Layout: a masonry dashboard of colour cards that open into full-screen calculators.
+   Tokens below are the fallback (Sky / Midnight); the app's own theme picker overrides them at runtime. */
+:root {
+  --bg: #e6f1ff; --bg-img: none; --surface: #ffffff; --surface-2: #d3e6fc; --fg: #10294a; --muted: #5b7393;
+  --line: rgba(16, 41, 74, .1); --accent: #1f7ae0; --key: #ffffff; --key-fg: #10294a; --op: #ff8a3d; --op-fg: #ffffff;
+  --eq: #1f7ae0; --eq-fg: #ffffff; --fn: #d3e6fc; --fn-fg: #10294a; --sheet: #ffffff; --field: #e6f1ff;
+  --good: #12855a; --bad: #c9302c;
+  --f-display: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-body: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-num: "Outfit", "Poppins", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a1020; --surface: #141d33; --surface-2: #1c2742; --fg: #e6ecf8; --muted: #8b98b4; --line: rgba(255,255,255,.1);
+    --accent: #6aa8ff; --key: #141d33; --key-fg: #e6ecf8; --op: #22305a; --op-fg: #9cc4ff; --eq: #3b82f6; --eq-fg: #ffffff;
+    --fn: #1c2742; --fn-fg: #e6ecf8; --sheet: #141d33; --field: #1c2742; --good: #5be49b; --bad: #ff8a7a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a1020; --surface: #141d33; --surface-2: #1c2742; --fg: #e6ecf8; --muted: #8b98b4; --line: rgba(255,255,255,.1);
+  --accent: #6aa8ff; --key: #141d33; --key-fg: #e6ecf8; --op: #22305a; --op-fg: #9cc4ff; --eq: #3b82f6; --eq-fg: #ffffff;
+  --fn: #1c2742; --fn-fg: #e6ecf8; --sheet: #141d33; --field: #1c2742; --good: #5be49b; --bad: #ff8a7a; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+body {
+  min-height: 100%; margin: 0; background: var(--bg); color: var(--fg);
+  font: 500 15px/1.45 var(--f-body); -webkit-tap-highlight-color: transparent;
+}
+body.in-calc { overflow: hidden; }
+.backdrop { position: fixed; inset: 0; z-index: -1; background: var(--bg); background-image: var(--bg-img); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; padding: 0; touch-action: manipulation; }
+:focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; }
+svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* ---------- Dashboard ---------- */
+#home {
+  max-width: 1000px; margin: 0 auto; padding-block: 14px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 6px 16px; }
+.brand { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.brand h1 { font: 800 27px/1 var(--f-display); letter-spacing: -.025em; margin: 0; text-wrap: balance; }
+.brand p { margin: 5px 0 0; color: var(--muted); font-size: 13px; font-weight: 600; }
+.logo { width: 42px; height: 42px; flex: none; }
+.top-actions { display: flex; gap: 8px; flex: none; }
+.icon-btn {
+  width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line); flex: none;
+}
+.pill-btn {
+  height: 42px; padding: 0 15px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line);
+  font-weight: 800; display: inline-flex; gap: 6px; align-items: center; font-size: 14px;
+}
+.pill-btn.on { background: var(--eq); color: var(--eq-fg); border-color: transparent; }
+.tools { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+@media (min-width: 640px) { .tools { flex-direction: row; } .tools .search { flex: 1; } .tools .seg { flex: 0 0 340px; } }
+.search {
+  display: flex; align-items: center; gap: 8px; height: 46px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 15px; padding: 0 12px; color: var(--muted);
+}
+.search input { flex: 1; border: 0; background: transparent; outline: none; font-size: 16px; min-width: 0; color: var(--fg); font-weight: 600; }
+.search input::placeholder { color: var(--muted); }
+
+.seg { display: flex; background: var(--surface); border: 1px solid var(--line); border-radius: 15px; padding: 3px; gap: 2px; }
+.seg button {
+  flex: 1; min-height: 36px; border-radius: 12px; font-weight: 800; font-size: 13px; color: var(--muted);
+  white-space: nowrap; padding: 0 10px;
+}
+.seg button.on { background: var(--eq); color: var(--eq-fg); }
+
+.edit-bar {
+  display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 16px; padding: 10px 10px 10px 14px; margin-bottom: 14px; font-size: 13px; font-weight: 600;
+}
+.edit-bar span { flex: 1; color: var(--muted); }
+
+#grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 54px;
+  grid-auto-flow: row dense; gap: 12px;
+}
+@media (min-width: 640px) { #grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 920px) { #grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.cat-h {
+  grid-column: 1 / -1; align-self: end; margin: 0; padding: 0 2px 2px;
+  font: 800 12px/1 var(--f-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+}
+.card {
+  position: relative; border-radius: 22px; overflow: hidden; color: #fff; isolation: isolate;
+  background: linear-gradient(145deg, var(--c1), var(--c2)); padding: 14px;
+  display: flex; flex-direction: column; gap: 5px; box-shadow: 0 10px 22px -14px var(--c2);
+  transition: transform .15s ease;
+}
+.card:active { transform: scale(.98); }
+.sz-s { grid-row: span 2; }
+.sz-m { grid-row: span 3; }
+.sz-l { grid-column: span 2; grid-row: span 3; }
+.card-hit { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+.cicon { width: 38px; height: 38px; border-radius: 12px; background: rgba(255,255,255,.22); display: grid; place-items: center; }
+.cname { font: 800 17px/1.15 var(--f-display); letter-spacing: -.01em; margin-top: auto; text-shadow: 0 1px 2px rgba(0,0,0,.15); }
+.sz-l .cname { font-size: 22px; }
+.cdesc { font-size: 12.5px; line-height: 1.35; font-weight: 600; opacity: .94; max-width: 34ch; }
+.cglyph {
+  position: absolute; right: -4px; bottom: -16px; z-index: -1; pointer-events: none;
+  font: 800 80px/1 var(--f-display); letter-spacing: -.05em; opacity: .17; white-space: nowrap;
+}
+.sz-l .cglyph { font-size: 110px; bottom: -22px; right: 6px; }
+.ctag {
+  position: absolute; top: 14px; right: 14px; font-size: 10.5px; font-weight: 800; letter-spacing: .08em;
+  text-transform: uppercase; background: rgba(255,255,255,.22); padding: 5px 9px; border-radius: 999px;
+}
+.cedit { position: absolute; z-index: 2; top: 8px; left: 8px; right: 8px; display: flex; gap: 5px; justify-content: space-between; }
+.cedit button {
+  height: 32px; min-width: 32px; padding: 0 6px; border-radius: 10px; background: rgba(0,0,0,.3); color: #fff;
+  display: grid; place-items: center; font-weight: 800; font-size: 12px;
+}
+.cedit svg.i { width: 17px; height: 17px; }
+.editing .card { outline: 2px dashed rgba(255,255,255,.75); outline-offset: -6px; }
+.editing .cicon, .editing .ctag { visibility: hidden; }
+.empty { grid-column: 1 / -1; grid-row: span 2; display: grid; place-items: center; color: var(--muted); font-weight: 700; text-align: center; }
+
+.hidden-wrap { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
+.hidden-wrap h2 { font: 800 12px/1 var(--f-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.hrow { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 8px 8px 8px 12px; }
+.hrow .dot { width: 14px; height: 14px; border-radius: 5px; background: linear-gradient(145deg, var(--c1), var(--c2)); flex: none; }
+.hrow span { flex: 1; font-weight: 700; }
+.foot-actions { margin-top: 18px; display: flex; justify-content: center; }
+
+/* ---------- Calculator view ---------- */
+#calcView {
+  position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column;
+  background: var(--bg); background-image: var(--bg-img);
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.cwrap { width: 100%; max-width: 680px; margin: 0 auto; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.cbar { display: flex; align-items: center; gap: 10px; height: 58px; flex: none; }
+.cbar h2 {
+  font: 800 21px/1.1 var(--f-display); letter-spacing: -.015em; margin: 0; flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 9px;
+}
+.cdot { width: 13px; height: 13px; border-radius: 4px; background: linear-gradient(145deg, var(--c1), var(--c2)); flex: none; }
+.cbar-actions { display: flex; gap: 8px; }
+.badge-btn { position: relative; }
+.badge-btn b {
+  position: absolute; top: -5px; right: -5px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px;
+  background: var(--eq); color: var(--eq-fg); font-size: 11px; display: grid; place-items: center;
+}
+#calcBody { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+#calcBody.fixed { overflow: hidden; }
+
+.abar {
+  flex: none; margin-bottom: 10px; border-radius: 20px; padding: 12px 12px 12px 16px; color: #fff;
+  background: linear-gradient(140deg, var(--c1), var(--c2)); display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 10px 22px -16px var(--c2);
+}
+.abar > div { flex: 1; min-width: 0; }
+.abar .al { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .9; }
+.abar .av { font: 700 30px/1.1 var(--f-num); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; letter-spacing: -.02em; }
+.abar .as { font-size: 13px; font-weight: 600; opacity: .92; }
+.abar .cp { background: rgba(255,255,255,.22); color: #fff; width: 40px; height: 40px; }
+
+/* keypad calculators */
+.calc { height: 100%; display: flex; flex-direction: column; gap: 10px; }
+.screen {
+  flex: 1; min-height: 140px; background: var(--surface); border: 1px solid var(--line); border-radius: 26px;
+  padding: 10px 14px 10px; display: flex; flex-direction: column; gap: 2px; overflow: hidden;
+}
+.tape { flex: 1 1 auto; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 1px; }
+.tape > :first-child { margin-top: auto; }
+.tline {
+  font-family: var(--f-num); text-align: right; color: var(--muted); font-size: 15px; font-weight: 600; padding: 3px 2px; border-radius: 8px;
+  font-variant-numeric: tabular-nums; overflow-wrap: anywhere; width: 100%;
+}
+.tline b { color: var(--fg); font-weight: 800; }
+.tline:active { background: var(--surface-2); }
+.edit-chip {
+  align-self: flex-end; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800;
+  background: var(--eq); color: var(--eq-fg); border-radius: 999px; padding: 4px 4px 4px 11px; margin-top: 4px;
+}
+.edit-chip button { background: rgba(255,255,255,.25); border-radius: 999px; padding: 3px 9px; font-weight: 800; }
+.expr {
+  width: 100%; border: 0; background: transparent; resize: none; text-align: right; flex: none;
+  font: 600 46px/1.16 var(--f-num); letter-spacing: -.01em; color: var(--fg); padding: 2px 0; margin: 0;
+  outline: none; overflow: hidden; caret-color: var(--accent); font-variant-numeric: tabular-nums;
+  -webkit-user-select: text; user-select: text;
+}
+.expr::placeholder { color: var(--muted); opacity: .6; }
+.preview { font-family: var(--f-num); text-align: right; min-height: 26px; font-size: 21px; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.preview.err { color: var(--bad); font-size: 15px; }
+.screen-bar { display: flex; gap: 6px; align-items: center; padding-top: 4px; }
+.flags { flex: 1; display: flex; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: .08em; color: var(--accent); }
+.mini {
+  height: 32px; padding: 0 11px; border-radius: 11px; background: var(--surface-2); font-size: 12.5px; font-weight: 800;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.mini svg.i { width: 15px; height: 15px; }
+
+.pills { display: flex; gap: 6px; overflow-x: auto; flex: none; scrollbar-width: none; }
+.pills::-webkit-scrollbar { display: none; }
+.pill {
+  height: 32px; padding: 0 13px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line);
+  font-weight: 800; font-size: 12px; letter-spacing: .05em; white-space: nowrap; flex: none;
+}
+.pill.on { background: var(--eq); color: var(--eq-fg); border-color: transparent; }
+
+.keys { display: grid; gap: 8px; flex: none; }
+.k4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.k5 { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
+.key {
+  height: clamp(50px, 8.4vh, 76px); border-radius: 21px; background: var(--key); color: var(--key-fg);
+  font: 600 27px/1 var(--f-num); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; box-shadow: 0 1px 0 var(--line), inset 0 0 0 1px var(--line); transition: transform .07s, filter .07s;
+  -webkit-user-select: none; user-select: none; min-width: 0;
+}
+.key:active { transform: scale(.94); filter: brightness(.9); }
+.key.op { background: var(--op); color: var(--op-fg); font-size: 31px; box-shadow: none; }
+.key.eq { background: var(--eq); color: var(--eq-fg); font-size: 32px; box-shadow: none; }
+.key.fn { background: var(--fn); color: var(--fn-fg); font-size: 21px; box-shadow: none; }
+.key.ac { color: var(--bad); }
+.key.on { box-shadow: inset 0 0 0 2.5px var(--accent); }
+.key small { font-size: 10px; font-weight: 800; opacity: .62; line-height: 1; letter-spacing: .02em; }
+.is-sci .key { height: clamp(40px, 6.1vh, 58px); border-radius: 16px; font-size: 22px; }
+.is-sci .key.fn { font-size: 16px; }
+.is-sci .key.op, .is-sci .key.eq { font-size: 26px; }
+.is-sci .expr { font-size: 38px; }
+
+/* form calculators */
+.form { display: flex; flex-direction: column; gap: 12px; padding-bottom: 28px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.panel h3 { margin: 0; font: 800 12px/1.2 var(--f-body); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: end; }
+.row2 .seg button { min-height: 44px; }
+.row3 { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: end; }
+.fld { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fl { font-size: 13px; font-weight: 700; color: var(--muted); }
+.fi {
+  display: flex; align-items: center; background: var(--field); border: 1.5px solid var(--line); border-radius: 14px;
+  height: 52px; padding: 0 12px; gap: 6px; min-width: 0;
+}
+.fi:focus-within { border-color: var(--accent); }
+.fi input, .fi select {
+  flex: 1; min-width: 0; width: 100%; border: 0; background: transparent; outline: none; font-size: 19px; font-weight: 800;
+  height: 100%; font-variant-numeric: tabular-nums; color: var(--fg); padding: 0;
+}
+.fi input[inputmode="decimal"] { font-family: var(--f-num); font-weight: 600; }
+.fi select { appearance: none; -webkit-appearance: none; font-size: 16px; font-weight: 700; }
+.fi input[type="date"] { font-size: 16px; font-weight: 700; min-height: 48px; }
+.fi.sel::after { content: ""; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg) translateY(-3px); flex: none; }
+.aff { font-weight: 800; color: var(--muted); font-size: 15px; flex: none; }
+.chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: -2px -14px 0; padding: 0 14px 2px; }
+.chips::-webkit-scrollbar { display: none; }
+.chips button { flex: none; height: 34px; padding: 0 13px; border-radius: 999px; background: var(--surface-2); font-weight: 800; font-size: 13px; }
+.chips button.on { background: var(--eq); color: var(--eq-fg); }
+.swap { width: 44px; height: 52px; border-radius: 14px; background: var(--surface-2); display: grid; place-items: center; }
+.ires { display: flex; align-items: center; gap: 10px; background: var(--field); border-radius: 16px; padding: 10px 10px 10px 14px; }
+.ires > div { flex: 1; min-width: 0; }
+.il { font-size: 12px; font-weight: 700; color: var(--muted); }
+.iv { font: 700 24px/1.15 var(--f-num); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.res { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.res:first-child { border-top: 0; padding-top: 0; }
+.rl { flex: 1; color: var(--muted); font-weight: 700; font-size: 14px; }
+.rv { font-family: var(--f-num); font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; min-width: 0; }
+.cp { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: var(--surface-2); flex: none; color: var(--fg); }
+.cp svg.i { width: 16px; height: 16px; }
+.good { color: var(--good); } .bad { color: var(--bad); }
+.note { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 0; font-weight: 600; }
+.split { height: 14px; border-radius: 999px; overflow: hidden; display: flex; background: var(--surface-2); }
+.split i { display: block; height: 100%; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.tbl-wrap { overflow-x: auto; margin: 0 -4px; }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.tbl th { text-align: right; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 6px 4px; }
+.tbl td { font-family: var(--f-num); text-align: right; padding: 8px 4px; border-top: 1px solid var(--line); font-weight: 700; white-space: nowrap; }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.ulist { display: flex; flex-direction: column; }
+.urow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 12px 2px; border-top: 1px solid var(--line); text-align: left; width: 100%; }
+.urow:first-child { border-top: 0; }
+.urow span { color: var(--muted); font-weight: 700; font-size: 14px; }
+.urow b { font-family: var(--f-num); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; font-size: 16px; }
+.urow.on span, .urow.on b { color: var(--accent); }
+.rates { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.rates .fi { height: 46px; }
+.rates .fi input { font-size: 16px; }
+.btn {
+  min-height: 38px; padding: 0 13px; border-radius: 12px; background: var(--surface-2); font-weight: 800; font-size: 13px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--fg);
+}
+.btn.pri { background: var(--eq); color: var(--eq-fg); }
+.btn.danger { color: var(--bad); }
+.btn svg.i { width: 16px; height: 16px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- Sheet, toast ---------- */
+#sheet { position: fixed; inset: 0; z-index: 30; }
+.scrim { position: absolute; inset: 0; background: rgba(4, 8, 22, .5); animation: fade .2s ease-out; }
+.sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; max-height: 88%; max-width: 640px; margin: 0 auto;
+  background: var(--sheet); color: var(--fg); border-radius: 26px 26px 0 0; display: flex; flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom, 0px); animation: up .24s cubic-bezier(.2,.8,.3,1);
+  box-shadow: 0 -10px 40px -10px rgba(0,0,0,.35);
+}
+.sheet-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-block: 16px 8px;
+  padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px));
+}
+.sheet-head h3 { margin: 0; font: 800 21px/1.1 var(--f-display); letter-spacing: -.01em; }
+.sheet-body {
+  overflow: auto; -webkit-overflow-scrolling: touch; padding-block: 4px 22px; display: flex; flex-direction: column; gap: 16px;
+  padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px));
+}
+.sheet-body h4 { margin: 0 0 8px; font: 800 12px/1 var(--f-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.tgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tsw { border-radius: 18px; padding: 6px 6px 8px; border: 2px solid transparent; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.tsw.on { border-color: var(--accent); }
+.tprev { height: 66px; border-radius: 13px; display: flex; align-items: flex-end; gap: 5px; padding: 8px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.tprev i { width: 15px; height: 15px; border-radius: 6px; display: block; box-shadow: 0 0 0 1.5px rgba(255,255,255,.5); }
+.tname { font-size: 12.5px; font-weight: 800; padding-left: 4px; }
+.tsw.auto { flex-direction: row; align-items: center; gap: 12px; }
+.tsw.auto .tprev { width: 66px; height: 46px; flex: none; }
+.cgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.cgrid button { aspect-ratio: 1; border-radius: 12px; background: linear-gradient(145deg, var(--c1), var(--c2)); max-width: 100%; }
+.cgrid button.on { box-shadow: 0 0 0 3px var(--sheet), 0 0 0 5px var(--accent); }
+.hitem { border-top: 1px solid var(--line); }
+.hitem:first-child { border-top: 0; }
+.hmain { width: 100%; text-align: right; padding: 12px 2px; display: flex; flex-direction: column; gap: 2px; }
+.he { font-family: var(--f-num); color: var(--muted); font-size: 14.5px; font-weight: 600; overflow-wrap: anywhere; }
+.hr { font: 700 24px/1.15 var(--f-num); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.ht { font-size: 11px; color: var(--muted); font-weight: 700; }
+.hacts { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 12px; justify-content: flex-end; }
+.hempty { text-align: center; color: var(--muted); font-weight: 700; padding: 30px 0; }
+
+#toast {
+  position: fixed; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); z-index: 40;
+  transform: translate(-50%, 16px); opacity: 0; pointer-events: none; max-width: calc(100% - 40px);
+  background: var(--fg); color: var(--bg); padding: 11px 16px; border-radius: 14px; font-weight: 800; font-size: 14px;
+  transition: opacity .2s, transform .2s; text-align: center; box-shadow: 0 8px 24px -8px rgba(0,0,0,.4);
+}
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+@keyframes up { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+@keyframes fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* font picker */
+.fgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.fopt { border-radius: 16px; padding: 10px 12px; background: var(--surface-2); border: 2px solid transparent; text-align: left; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fopt.on { border-color: var(--accent); }
+.fopt .fa { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.fopt .fn { font-size: 12px; font-weight: 700; color: var(--muted); }
+.fopt .fd { font-size: 26px; font-weight: 600; line-height: 1.2; letter-spacing: .01em; overflow-wrap: anywhere; }
+.fopt .rec { font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.nlist { display: flex; flex-direction: column; gap: 8px; }
+.rrow { display: flex; flex-direction: column; gap: 6px; padding: 10px 0; border-top: 1px solid var(--line); }
+.rrow:first-child { border-top: 0; padding-top: 0; }
+.rrow .rn { font-weight: 800; font-size: 14px; }
+.rrow .rn small { color: var(--muted); font-weight: 600; }
+
+/* note split + text mode + floating */
+.notes { display: none; }
+.calc.with-note .notes {
+  flex: 1 1 auto; min-height: 150px; display: flex; flex-direction: column; gap: 6px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 8px 10px 10px;
+}
+.calc.with-note .tape { display: none; }
+.calc.with-note .screen { flex: 0 0 auto; min-height: 0; padding-top: 8px; border-radius: 20px; }
+.calc.with-note .keys { gap: 6px; }
+.calc.with-note .key { height: clamp(36px, 5.4vh, 48px); font-size: 22px; border-radius: 15px; }
+.calc.with-note .key.op, .calc.with-note .key.eq { font-size: 25px; }
+.calc.with-note.is-sci .key { height: clamp(28px, 4.1vh, 38px); font-size: 16px; border-radius: 12px; }
+.calc.with-note.is-sci .key.fn { font-size: 13px; }
+.calc.with-note.is-sci .key small { display: none; }
+.calc.with-note .preview { min-height: 20px; font-size: 17px; }
+.nbar { display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; flex: none; }
+.nbar::-webkit-scrollbar { display: none; }
+.nbar strong { flex: 1; font-size: 11.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); padding-left: 4px; }
+.nbar .mini { flex: none; }
+.notes textarea {
+  flex: 1; min-height: 0; width: 100%; border: 0; background: var(--field); border-radius: 14px; padding: 10px 12px;
+  resize: none; font: 500 16px/1.5 var(--f-body); color: var(--fg); outline: none;
+}
+.notes textarea::placeholder { color: var(--muted); }
+.mini.on, .icon-btn.pill-on { background: var(--eq); color: var(--eq-fg); border-color: transparent; }
+.float-note { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 24px; color: var(--muted); font-weight: 700; }
+.float-note p { max-width: 32ch; margin: 0; }
+
+</style>
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"></div>
+
+<main id="home">
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a3d"/><stop offset=".5" stop-color="#ff4f9a"/><stop offset="1" stop-color="#5b6cff"/></linearGradient></defs>
+        <rect width="48" height="48" rx="14" fill="url(#lg)"/>
+        <g stroke="#fff" stroke-width="3.6" stroke-linecap="round" fill="none">
+          <path d="M15 11v10M10 16h10M28 16h10M11.5 28.5l7 7M18.5 28.5l-7 7M28 29h10M28 35h10"/>
+        </g>
+      </svg>
+      <div>
+        <h1>Calculator Ultra</h1>
+        <p id="countLine">13 calculators</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="btnTheme" type="button" aria-label="Themes and settings"></button>
+      <button class="pill-btn" id="btnEdit" type="button"></button>
+    </div>
+  </header>
+
+  <div class="tools">
+    <label class="search"><span id="searchIcon"></span><input id="search" type="search" placeholder="Search calculators" autocomplete="off" aria-label="Search calculators"></label>
+    <div class="seg" id="sortSeg" role="group" aria-label="Sort cards">
+      <button type="button" data-sort="custom">My order</button>
+      <button type="button" data-sort="az">A–Z</button>
+      <button type="button" data-sort="cat">Category</button>
+    </div>
+  </div>
+
+  <div class="edit-bar" id="editBar" hidden>
+    <span>Tap a card to rename, recolour or resize it. Arrows move it.</span>
+    <button class="btn pri" id="btnDone" type="button">Done</button>
+  </div>
+
+  <div id="grid"></div>
+
+  <section class="hidden-wrap" id="hiddenWrap" hidden>
+    <h2>Hidden calculators</h2>
+    <div id="hiddenList" style="display:flex;flex-direction:column;gap:8px"></div>
+  </section>
+  <div class="foot-actions" id="editFoot" hidden><button class="btn danger" id="btnReset" type="button">Reset dashboard</button></div>
+</main>
+
+<section id="calcView" hidden aria-live="off">
+  <div class="cwrap">
+    <header class="cbar">
+      <button class="icon-btn" id="btnBack" type="button" aria-label="Back to dashboard"></button>
+      <h2><span class="cdot"></span><span id="calcTitle"></span></h2>
+      <div class="cbar-actions" id="cbarActions"></div>
+    </header>
+    <div class="abar" id="abar" hidden></div>
+    <div id="calcBody"></div>
+  </div>
+  <div class="float-note" id="floatNote" hidden>
+    <p>The calculator is open in its own small window. It stays on top while you work in other apps.</p>
+    <button class="btn pri" id="btnUnfloat" type="button">Bring it back here</button>
+  </div>
+</section>
+
+<div id="sheet" hidden>
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-head"><h3 id="sheetTitle"></h3><button class="icon-btn" id="sheetClose" type="button" aria-label="Close"></button></div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* Prism Calc — expression engine (basic + scientific) */
+const Calc = (() => {
+  class CalcErr extends Error {}
+  const FN = ['sinh⁻¹', 'cosh⁻¹', 'tanh⁻¹', 'sin⁻¹', 'cos⁻¹', 'tan⁻¹', 'sinh', 'cosh', 'tanh',
+    'sin', 'cos', 'tan', 'log₂', 'log', 'ln', 'abs', '√', '∛'];
+  const WORDS = [...FN.map(n => [n, 'fn']), ['Ans', 'const'], ['rand', 'const'], ['mod', 'mod'], ['π', 'const'], ['e', 'const']]
+    .sort((a, b) => b[0].length - a[0].length);
+
+  function normalize(s) {
+    return String(s)
+      .replace(/[×✕xX*·]/g, '*')
+      .replace(/[÷/]/g, '/')
+      .replace(/[−–—]/g, '-')
+      .replace(/[,\s]/g, '');
+  }
+
+  function tokenize(src) {
+    const s = normalize(src), out = [];
+    let i = 0;
+    outer: while (i < s.length) {
+      const c = s[i];
+      if (/[0-9.]/.test(c)) {
+        const m = /^(?:\d+\.?\d*|\.\d+)(?:E[+-]?\d+)?/.exec(s.slice(i));
+        if (!m) throw new CalcErr('Incomplete number');
+        if (s[i + m[0].length] === '.') throw new CalcErr('Too many decimal points');
+        out.push({ t: 'num', v: parseFloat(m[0]) });
+        i += m[0].length;
+        continue;
+      }
+      for (const [w, t] of WORDS) {
+        if (s.startsWith(w, i)) {
+          out.push(t === 'fn' ? { t: 'fn', v: w } : t === 'mod' ? { t: 'mod' } : { t: 'const', v: w });
+          i += w.length;
+          continue outer;
+        }
+      }
+      if ('+-*/^'.includes(c)) { out.push({ t: 'op', v: c }); i++; continue; }
+      if (c === '(' || c === ')') { out.push({ t: c }); i++; continue; }
+      if (c === '⁻' && s[i + 1] === '¹') { out.push({ t: 'post', v: 'inv' }); i += 2; continue; }
+      if ('!%²³'.includes(c)) { out.push({ t: 'post', v: c }); i++; continue; }
+      if (c === 'P' || c === 'C') { out.push({ t: c }); i++; continue; }
+      if (c === 'E') throw new CalcErr('Incomplete number');
+      throw new CalcErr(`Can't read “${c}”`);
+    }
+    return out;
+  }
+
+  const fact = n => {
+    if (n < 0 || !Number.isInteger(n)) throw new CalcErr('n! needs a whole number, 0 or more');
+    if (n > 170) throw new CalcErr('Number too large for n!');
+    let r = 1; for (let k = 2; k <= n; k++) r *= k; return r;
+  };
+  const checkNR = (n, r) => {
+    if (!Number.isInteger(n) || !Number.isInteger(r) || n < 0 || r < 0) throw new CalcErr('nCr and nPr need whole numbers');
+    if (r > n) throw new CalcErr('r must not be bigger than n');
+  };
+  const nPr = (n, r) => { checkNR(n, r); let v = 1; for (let k = 0; k < r; k++) v *= (n - k); return v; };
+  const nCr = (n, r) => { checkNR(n, r); r = Math.min(r, n - r); let v = 1; for (let k = 1; k <= r; k++) v = v * (n - r + k) / k; return Math.round(v); };
+  const pow = (b, e) => {
+    if (b < 0 && !Number.isInteger(e)) {
+      const inv = 1 / e;
+      if (Math.abs(inv - Math.round(inv)) < 1e-9 && Math.round(inv) % 2 !== 0) return -Math.pow(-b, e);
+    }
+    return Math.pow(b, e);
+  };
+
+  function fnv(n, a, deg) {
+    const R = x => deg ? x * Math.PI / 180 : x, D = x => deg ? x * 180 / Math.PI : x;
+    const z = x => Math.abs(x) < 1e-12 ? 0 : x;
+    switch (n) {
+      case 'sin': return z(Math.sin(R(a)));
+      case 'cos': return z(Math.cos(R(a)));
+      case 'tan': {
+        if (Math.abs(Math.cos(R(a))) < 1e-12) throw new CalcErr('tan is undefined at this angle');
+        return z(Math.tan(R(a)));
+      }
+      case 'sin⁻¹': if (a < -1 || a > 1) throw new CalcErr('sin⁻¹ needs a value from −1 to 1'); return D(Math.asin(a));
+      case 'cos⁻¹': if (a < -1 || a > 1) throw new CalcErr('cos⁻¹ needs a value from −1 to 1'); return D(Math.acos(a));
+      case 'tan⁻¹': return D(Math.atan(a));
+      case 'sinh': return Math.sinh(a);
+      case 'cosh': return Math.cosh(a);
+      case 'tanh': return Math.tanh(a);
+      case 'sinh⁻¹': return Math.asinh(a);
+      case 'cosh⁻¹': if (a < 1) throw new CalcErr('cosh⁻¹ needs a value of 1 or more'); return Math.acosh(a);
+      case 'tanh⁻¹': if (a <= -1 || a >= 1) throw new CalcErr('tanh⁻¹ needs a value between −1 and 1'); return Math.atanh(a);
+      case 'log': if (a <= 0) throw new CalcErr('log needs a number above 0'); return Math.log10(a);
+      case 'log₂': if (a <= 0) throw new CalcErr('log₂ needs a number above 0'); return Math.log2(a);
+      case 'ln': if (a <= 0) throw new CalcErr('ln needs a number above 0'); return Math.log(a);
+      case 'abs': return Math.abs(a);
+      case '√': if (a < 0) throw new CalcErr("Can't take √ of a negative number"); return Math.sqrt(a);
+      case '∛': return Math.cbrt(a);
+    }
+    throw new CalcErr('Unknown function');
+  }
+
+  function evaluate(src, opt = {}) {
+    const deg = opt.deg !== false;
+    const toks = tokenize(src);
+    if (!toks.length) throw new CalcErr('Empty');
+    let depth = 0;
+    for (const k of toks) {
+      if (k.t === '(') depth++;
+      else if (k.t === ')') { depth--; if (depth < 0) throw new CalcErr('Too many closing brackets'); }
+    }
+    while (depth-- > 0) toks.push({ t: ')' });
+
+    let p = 0;
+    const peek = () => toks[p], next = () => toks[p++];
+    const starts = k => k && (k.t === 'num' || k.t === 'const' || k.t === '(' || k.t === 'fn');
+
+    function expr() {
+      let L = term().v;
+      while (peek() && peek().t === 'op' && (peek().v === '+' || peek().v === '-')) {
+        const o = next().v, R = term();
+        const add = R.pct != null ? L * R.pct / 100 : R.v;
+        L = o === '+' ? L + add : L - add;
+      }
+      return L;
+    }
+    function term() {
+      const a = unary();
+      let v = a.v, pct = a.pct;
+      for (;;) {
+        const k = peek();
+        if (!k) break;
+        if (k.t === 'op' && (k.v === '*' || k.v === '/')) {
+          next();
+          const b = unary();
+          if (k.v === '/' && b.v === 0) throw new CalcErr("Can't divide by zero");
+          v = k.v === '*' ? v * b.v : v / b.v; pct = null;
+        } else if (k.t === 'mod') {
+          next(); const b = unary();
+          if (b.v === 0) throw new CalcErr("Can't divide by zero");
+          v = ((v % b.v) + b.v) % b.v; pct = null;
+        } else if (k.t === 'P' || k.t === 'C') {
+          next(); const b = unary();
+          v = k.t === 'P' ? nPr(v, b.v) : nCr(v, b.v); pct = null;
+        } else if (starts(k)) {
+          v = v * power().v; pct = null;
+        } else break;
+      }
+      return { v, pct };
+    }
+    function unary() {
+      const k = peek();
+      if (k && k.t === 'op' && (k.v === '-' || k.v === '+')) {
+        next();
+        const r = unary();
+        return k.v === '-' ? { v: -r.v, pct: r.pct != null ? -r.pct : null } : r;
+      }
+      return power();
+    }
+    function power() {
+      const b = postfix();
+      if (peek() && peek().t === 'op' && peek().v === '^') {
+        next();
+        const e = unary();
+        return { v: pow(b.v, e.v), pct: null };
+      }
+      return b;
+    }
+    function postfix() {
+      let v = primary(), pct = null;
+      while (peek() && peek().t === 'post') {
+        const o = next().v;
+        if (o === '%') { pct = v; v = v / 100; continue; }
+        pct = null;
+        if (o === '!') v = fact(v);
+        else if (o === '²') v = v * v;
+        else if (o === '³') v = v * v * v;
+        else if (o === 'inv') { if (v === 0) throw new CalcErr("Can't divide by zero"); v = 1 / v; }
+      }
+      return { v, pct };
+    }
+    function paren() {
+      const v = expr();
+      const k = next();
+      if (!k || k.t !== ')') throw new CalcErr('Check the brackets');
+      return v;
+    }
+    function primary() {
+      const k = next();
+      if (!k) throw new CalcErr('Incomplete');
+      if (k.t === 'num') return k.v;
+      if (k.t === 'const') {
+        if (k.v === 'π') return Math.PI;
+        if (k.v === 'e') return Math.E;
+        if (k.v === 'Ans') return opt.ans || 0;
+        if (k.v === 'rand') return Math.random();
+      }
+      if (k.t === '(') return paren();
+      if (k.t === 'fn') {
+        let a;
+        if (peek() && peek().t === '(') { next(); a = paren(); }
+        else a = postfix().v;
+        return fnv(k.v, a, deg);
+      }
+      throw new CalcErr('Incomplete');
+    }
+
+    const r0 = expr();
+    if (p < toks.length) throw new CalcErr('Check the expression');
+    if (Number.isNaN(r0)) throw new CalcErr('Not a real number');
+    if (!Number.isFinite(r0)) throw new CalcErr('Too large to show');
+    let r = +r0.toPrecision(12);
+    if (Object.is(r, -0)) r = 0;
+    return r;
+  }
+
+  // Words typed as labels ("Apple 450 + Egg 90") are kept on screen but ignored in the maths.
+  const LABEL_RE = /\p{L}[\p{L}'’.&]*(?:[-\s]+\p{L}[\p{L}'’.&]*)*/gu;
+  const stripLabels = s => {
+    const t = String(s).replace(LABEL_RE, ' ').replace(/:/g, ' ');
+    if (/[\d.)%]\s+[\d.(]/.test(t)) throw new CalcErr('Put + − × or ÷ between the items');
+    return t;
+  };
+  return { evaluate, tokenize, stripLabels, LABEL_RE, CalcErr };
+})();
+if (typeof module !== 'undefined') module.exports = Calc;
+
+</script>
+<script>
+/* Calculator Ultra — app */
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const svg = p => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+/* ---------- icons ---------- */
+const I = {
+  back: svg('<path d="M15 5l-7 7 7 7"/>'),
+  palette: svg('<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.7-1 1.2-1.9-.6-1.1.2-2.3 1.5-2.3H17a4 4 0 0 0 4-4C21 7.4 17 3 12 3z"/><circle cx="7.5" cy="11.5" r="1.1"/><circle cx="10" cy="7.5" r="1.1"/><circle cx="15" cy="7.5" r="1.1"/>'),
+  pencil: svg('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'),
+  check: svg('<path d="M5 12.5l4.5 4.5L19 7"/>'),
+  clock: svg('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+  copy: svg('<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.5"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/>'),
+  paste: svg('<rect x="5" y="4.5" width="14" height="16.5" rx="2.5"/><path d="M9 4.5V3h6v1.5M9 11h6M9 15h4"/>'),
+  x: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
+  search: svg('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/>'),
+  swap: svg('<path d="M7 4v16M4 17l3 3 3-3M17 20V4M14 7l3-3 3 3"/>'),
+  eyeoff: svg('<path d="M3 3l18 18"/><path d="M10.6 6.1A9.7 9.7 0 0 1 12 6c5 0 9 6 9 6a15.6 15.6 0 0 1-2.9 3.4M6.6 7.6C4.4 9.1 3 12 3 12s4 6 9 6a8.6 8.6 0 0 0 3.5-.8"/>'),
+  left: svg('<path d="M14.5 6l-6 6 6 6"/>'),
+  right: svg('<path d="M9.5 6l6 6-6 6"/>'),
+  note: svg('<path d="M5 3.5h10l4 4V20.5H5z"/><path d="M14.5 3.5v4.5H19M8 12.5h8M8 16.5h5"/>'),
+  float: svg('<rect x="3" y="4" width="18" height="15" rx="2.5"/><rect x="11.5" y="11" width="7" height="5.5" rx="1.2"/>'),
+  reset: svg('<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3L4.5 9M4.5 4.5V9H9"/>'),
+  cloud: svg('<path d="M7 18a4.5 4.5 0 0 1-.6-9A6 6 0 0 1 18 9.5a4 4 0 0 1-.5 8.5z"/><path d="M12 11v5M9.8 13.8L12 16l2.2-2.2"/>'),
+};
+const CICON = {
+  calc: svg('<rect x="5" y="2.5" width="14" height="19" rx="3"/><rect x="8" y="5.5" width="8" height="4" rx="1"/><path d="M8.6 13h.01M12 13h.01M15.4 13h.01M8.6 17h.01M12 17h.01M15.4 17h.01" stroke-width="2.6"/>'),
+  sci: svg('<path d="M3 13h3l3 7 4.5-16H21"/><path d="M15 11l5 6M20 11l-5 6"/>'),
+  percent: svg('<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>'),
+  tag: svg('<path d="M3.5 3.5h8l9 9-8 8-9-9z"/><circle cx="8" cy="8" r="1.5"/>'),
+  bill: svg('<path d="M6 2.5h12v19l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5z"/><path d="M9 8h6M9 12h6M9 16h3"/>'),
+  date: svg('<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'),
+  ruler: svg('<path d="M3 17L17 3l4 4L7 21z"/><path d="M7.5 12.5l2 2M10.5 9.5l2 2M13.5 6.5l2 2"/>'),
+  money: svg('<path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/>'),
+  bank: svg('<path d="M3 10l9-6 9 6M5 10v8M10 10v8M14 10v8M19 10v8M3 20.5h18"/>'),
+  trend: svg('<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>'),
+  bars: svg('<path d="M5 20v-6M10 20V10M15 20v-7M20 20V5"/>'),
+  land: svg('<path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z"/><path d="M9 4v13M15 7v13"/>'),
+  gold: svg('<path d="M3 20l2-6h6l2 6zM11 20l2-6h6l2 6zM7 14l2-6h6l2 6z"/>'),
+};
+
+/* ---------- data ---------- */
+const CATS = [['math', 'Math'], ['everyday', 'Everyday'], ['money', 'Money'], ['convert', 'Converters'], ['local', 'Bangladesh']];
+const catName = id => (CATS.find(c => c[0] === id) || [, ''])[1];
+const COLORS = {
+  coral: ['#ff7a6b', '#e8463a'], orange: ['#ffa24a', '#ee6a17'], amber: ['#f5ae1d', '#c97100'], lime: ['#86cf2e', '#3d8b12'],
+  green: ['#2fcb78', '#12864a'], teal: ['#22c9b1', '#0b8174'], cyan: ['#29c0e8', '#0a78a8'], blue: ['#4f8fff', '#2350d8'],
+  indigo: ['#7272ff', '#4532cc'], violet: ['#b265ff', '#7a2bd6'], pink: ['#ff63b0', '#cf2479'], rose: ['#ff5d72', '#c41d3e'],
+  earth: ['#d48b4b', '#8a4a1a'], slate: ['#7d8ba6', '#46536e'],
+};
+const CALCS = [
+  { id: 'basic', name: 'Calculator', cat: 'math', color: 'blue', size: 'l', icon: 'calc', glyph: '=', desc: 'Everyday sums. The full sum stays on screen, and history can be edited, copied or deleted.' },
+  { id: 'sci', name: 'Scientific', cat: 'math', color: 'indigo', size: 'm', icon: 'sci', glyph: 'π', desc: 'Trig, logs, powers, n!, nCr and memory, with history.' },
+  { id: 'percent', name: 'Percentage', cat: 'everyday', color: 'orange', size: 'm', icon: 'percent', glyph: '%', desc: '% of a number, % change, add or remove %.' },
+  { id: 'discount', name: 'Discount', cat: 'everyday', color: 'pink', size: 'm', icon: 'tag', glyph: '−20', desc: 'Sale price, money saved and VAT at once.' },
+  { id: 'bill', name: 'Bill Split', cat: 'everyday', color: 'coral', size: 's', icon: 'bill', glyph: '÷', desc: 'Share a bill and tip between people.' },
+  { id: 'date', name: 'Age & Dates', cat: 'everyday', color: 'violet', size: 's', icon: 'date', glyph: '31', desc: 'Exact age, days between dates, add days.' },
+  { id: 'unit', name: 'Unit Converter', cat: 'convert', color: 'teal', size: 's', icon: 'ruler', glyph: 'km', desc: 'Length, weight, pressure, volume, data and more.' },
+  { id: 'currency', name: 'Currency', cat: 'convert', color: 'cyan', size: 's', icon: 'money', glyph: '৳', desc: 'Taka and 16 other currencies, with your own rates.' },
+  { id: 'emi', name: 'Loan EMI', cat: 'money', color: 'green', size: 's', icon: 'bank', glyph: 'EMI', desc: 'Monthly instalment, total interest, yearly table.' },
+  { id: 'interest', name: 'Interest', cat: 'money', color: 'lime', size: 's', icon: 'trend', glyph: '↗', desc: 'Simple and compound interest.' },
+  { id: 'profit', name: 'Profit & Margin', cat: 'money', color: 'rose', size: 's', icon: 'bars', glyph: '+', desc: 'Profit, margin, markup and selling price.' },
+  { id: 'land', name: 'Land Measure', cat: 'local', color: 'earth', size: 's', icon: 'land', glyph: 'ft²', desc: 'Decimal, katha, bigha, acre and square feet.' },
+  { id: 'gold', name: 'Gold Weight', cat: 'local', color: 'amber', size: 's', icon: 'gold', glyph: 'Au', desc: 'Bhori, ana, rati, grams and price.' },
+];
+const byId = id => CALCS.find(c => c.id === id);
+
+/* ---------- themes ---------- */
+const T = (id, name, group, o) => Object.assign({ id, name, group }, o);
+const G = { dark: 1, glass: 1, accent: '#ffffff' };
+const THEMES = [
+  T('sky', 'Sky', 'light', { bg: '#e6f1ff', surface: '#ffffff', s2: '#d3e6fc', fg: '#10294a', muted: '#5b7393', accent: '#1f7ae0', op: '#ff8a3d', eq: '#1f7ae0' }),
+  T('mint', 'Mint', 'light', { bg: '#e2f6ee', surface: '#ffffff', s2: '#c6ecdc', fg: '#0d3a2d', muted: '#4e7a6a', accent: '#0f8f6c', op: '#ff5c8a', eq: '#0f9b74' }),
+  T('peach', 'Peach', 'light', { bg: '#fff0e6', surface: '#ffffff', s2: '#ffdcc6', fg: '#4a2312', muted: '#8b5d46', accent: '#e05a20', op: '#7b4dff', eq: '#f2672e' }),
+  T('lilac', 'Lilac', 'light', { bg: '#f1ebff', surface: '#ffffff', s2: '#e0d4ff', fg: '#2d1a5c', muted: '#6c5b93', accent: '#6c3ff0', op: '#0aa596', eq: '#7448f0' }),
+  T('lemon', 'Lemon', 'light', { bg: '#fff9d6', surface: '#ffffff', s2: '#ffef9c', fg: '#3a3200', muted: '#74691f', accent: '#a86f00', op: '#0f7f8a', eq: '#ffc531', eqfg: '#3a2a00' }),
+  T('blush', 'Blush', 'light', { bg: '#ffeaf1', surface: '#ffffff', s2: '#ffd0de', fg: '#4c1427', muted: '#8c5266', accent: '#d81f58', op: '#3b5bfd', eq: '#e0245e' }),
+  T('ocean', 'Ocean', 'deep', { dark: 1, bg: '#0b3a6b', surface: '#13508f', s2: '#0f467e', fn: '#1b62a8', fg: '#eef6ff', muted: '#a3c6e8', accent: '#7fd6ff', op: '#ffb74d', opfg: '#2b1600', eq: '#5cc8ff', eqfg: '#04213a' }),
+  T('emerald', 'Emerald', 'deep', { dark: 1, bg: '#064a38', surface: '#0a6a50', s2: '#085a44', fn: '#0e7d5e', fg: '#eafff6', muted: '#98d6bd', accent: '#5fe9b4', op: '#fcc53a', opfg: '#2b1d00', eq: '#3ee0a0', eqfg: '#03291d' }),
+  T('royal', 'Royal', 'deep', { dark: 1, bg: '#2c0f63', surface: '#43168d', s2: '#381378', fn: '#5420a7', fg: '#f5eeff', muted: '#bea9e9', accent: '#d3a8ff', op: '#ff7ac2', opfg: '#3b0624', eq: '#c792ff', eqfg: '#220846' }),
+  T('crimson', 'Crimson', 'deep', { dark: 1, bg: '#6e1720', surface: '#8e2330', s2: '#7e1e29', fn: '#a52f3d', fg: '#fff2f3', muted: '#f0b4ba', accent: '#ffc2b8', op: '#ffe066', opfg: '#3a2e00', eq: '#ffb3a7', eqfg: '#4a0d12' }),
+  T('lagoon', 'Lagoon', 'deep', { dark: 1, bg: '#0f4c4a', surface: '#17675f', s2: '#135a54', fn: '#1f7a70', fg: '#eafffb', muted: '#a0d7ce', accent: '#7ff0de', op: '#ff9a52', opfg: '#2e1300', eq: '#5eead4', eqfg: '#042f2a' }),
+  T('copper', 'Copper', 'deep', { dark: 1, bg: '#6f2f0c', surface: '#8d4317', s2: '#7e3b13', fn: '#a2531f', fg: '#fff6ec', muted: '#f2c9a0', accent: '#ffd09a', op: '#6ee7f9', opfg: '#08333a', eq: '#ffc078', eqfg: '#3b1a03' }),
+  T('sunset', 'Sunset', 'mixed', Object.assign({ bg: '#ff5e7e', img: 'linear-gradient(165deg,#ffa24c 0%,#ff5e7e 50%,#9b4dff 100%)', opfg: '#e2386a', eq: '#2a0f45', sheet: '#3a1638' }, G)),
+  T('aurora', 'Aurora', 'mixed', Object.assign({ bg: '#4f6dff', img: 'linear-gradient(160deg,#10c9a8 0%,#4f6dff 55%,#a646ff 100%)', opfg: '#3f4fe0', eq: '#13114a', sheet: '#1d2054' }, G)),
+  T('candy', 'Candy', 'mixed', Object.assign({ bg: '#a46cff', img: 'linear-gradient(160deg,#ff6fb5 0%,#a46cff 50%,#45a8ff 100%)', opfg: '#c03d8f', eq: '#2c1257', sheet: '#2f1a55' }, G)),
+  T('tropical', 'Tropical', 'mixed', Object.assign({ bg: '#00a39a', img: 'linear-gradient(160deg,#4fb43a 0%,#00a39a 50%,#00739e 100%)', opfg: '#00806f', eq: '#04303a', sheet: '#0d3a40' }, G)),
+  T('dusk', 'Dusk', 'mixed', Object.assign({ bg: '#b2336b', img: 'linear-gradient(165deg,#34298c 0%,#b2336b 55%,#ff8a52 100%)', opfg: '#8a2a6a', eq: '#170f3d', sheet: '#2a1638' }, G)),
+  T('citrus', 'Citrus', 'mixed', Object.assign({ bg: '#ea580c', img: 'linear-gradient(160deg,#f59e0b 0%,#ea580c 50%,#be123c 100%)', opfg: '#c2410c', eq: '#3a0d10', sheet: '#3d1712' }, G)),
+  T('midnight', 'Midnight', 'night', { dark: 1, bg: '#0a1020', surface: '#141d33', s2: '#1c2742', fg: '#e6ecf8', muted: '#8b98b4', accent: '#6aa8ff', op: '#22305a', opfg: '#9cc4ff', eq: '#3b82f6' }),
+  T('black', 'Pure Black', 'night', { dark: 1, bg: '#000000', surface: '#0f0f11', s2: '#1c1c20', fg: '#f2f2f4', muted: '#8c8c95', accent: '#ff9f0a', op: '#ff9f0a', opfg: '#1a0e00', eq: '#30d158', eqfg: '#032010' }),
+  T('graphite', 'Graphite', 'night', { dark: 1, bg: '#1b1c20', surface: '#26282e', s2: '#32353c', fg: '#ececf1', muted: '#9b9da7', accent: '#b4ef4a', op: '#3b3e46', opfg: '#c4f56b', eq: '#b4ef4a', eqfg: '#18210a' }),
+  T('forest', 'Forest', 'night', { dark: 1, bg: '#0b1913', surface: '#13251d', s2: '#1b3328', fg: '#e2f4ea', muted: '#87a998', accent: '#4ade80', op: '#1e3d2e', opfg: '#86efac', eq: '#22c55e', eqfg: '#04210f' }),
+  T('plum', 'Plum', 'night', { dark: 1, bg: '#160b1e', surface: '#21122c', s2: '#2d1a3c', fg: '#f2e9f8', muted: '#a68cb6', accent: '#ec84ff', op: '#3a2150', opfg: '#f4b3ff', eq: '#d946ef' }),
+  T('neon', 'Neon', 'night', { dark: 1, bg: '#06061a', surface: '#0f0f2b', s2: '#17173a', fg: '#e9e9ff', muted: '#8d8dc4', accent: '#22d3ee', op: '#2a0f3f', opfg: '#ff5ad9', eq: '#22d3ee', eqfg: '#03191e' }),
+];
+const GROUPS = [['light', 'Light'], ['deep', 'Deep'], ['mixed', 'Mixed colours'], ['night', 'Night (dark)']];
+
+function themeVars(t) {
+  const g = !!t.glass;
+  return {
+    '--bg': t.bg, '--bg-img': t.img || 'none',
+    '--surface': g ? 'rgba(255,255,255,.17)' : t.surface, '--surface-2': g ? 'rgba(255,255,255,.24)' : t.s2,
+    '--fg': t.fg || '#ffffff', '--muted': t.muted || 'rgba(255,255,255,.82)',
+    '--line': g ? 'rgba(255,255,255,.22)' : t.dark ? 'rgba(255,255,255,.11)' : 'rgba(16,30,60,.09)',
+    '--accent': t.accent,
+    '--key': t.key || (g ? 'rgba(255,255,255,.2)' : t.surface), '--key-fg': t.fg || '#ffffff',
+    '--op': t.op || (g ? '#ffffff' : t.accent), '--op-fg': t.opfg || '#ffffff',
+    '--eq': t.eq, '--eq-fg': t.eqfg || '#ffffff',
+    '--fn': t.fn || (g ? 'rgba(255,255,255,.32)' : t.s2), '--fn-fg': t.fg || '#ffffff',
+    '--sheet': t.sheet || t.surface,
+    '--field': g ? 'rgba(255,255,255,.18)' : t.dark ? t.s2 : t.bg,
+    '--good': g ? '#d2ffe4' : t.dark ? '#6cf0a8' : '#0f7a52', '--bad': g ? '#ffe58f' : t.dark ? '#ff9c8f' : '#c2281f',
+  };
+}
+
+/* ---------- storage ---------- */
+const KEY = 'prismcalc.v1';
+const defaults = () => ({
+  theme: 'auto', sort: 'custom', order: CALCS.map(c => c.id), sizes: {}, hidden: {}, names: {}, colors: {},
+  hist: { basic: [], sci: [] }, angle: 'deg', mem: 0, ans: 0, inputs: {}, cur: '৳', grp: 'intl', rates: null, ratesDate: '', font: 'Poppins', numFont: 'Outfit',
+});
+let S = defaults();
+try {
+  const d = JSON.parse(localStorage.getItem(KEY) || 'null');
+  if (d && typeof d === 'object') S = Object.assign(defaults(), d);
+} catch (e) { /* storage blocked */ }
+S.order = S.order.filter(byId);
+CALCS.forEach(c => { if (!S.order.includes(c.id)) S.order.push(c.id); });
+S.hist = Object.assign({ basic: [], sci: [] }, S.hist);
+let saveTimer;
+function save() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }, 120);
+}
+
+/* ---------- formatting ---------- */
+const loc = () => S.grp === 'lakh' ? 'en-IN' : 'en-US';
+const useGrp = () => S.grp !== 'none';
+const minus = s => s.replace(/-/g, '−');
+function fmtCalc(n, group = true) {
+  if (n === 0) return '0';
+  const a = Math.abs(n);
+  if (a >= 1e15 || a < 1e-9) return minus(n.toExponential(10).replace(/\.?0+e/, 'e').replace('e', 'E'));
+  const s = +n.toPrecision(12);
+  return minus(s.toLocaleString(loc(), { maximumFractionDigits: 12, useGrouping: group && useGrp() }));
+}
+const rawCalc = n => fmtCalc(n, false).replace(/−/g, '-');
+function nf2(x, max = 2) {
+  if (x == null || !isFinite(x)) return '—';
+  const r = +(+x).toFixed(max);
+  const min = Number.isInteger(r) ? 0 : Math.min(max, 2);
+  return minus(r.toLocaleString(loc(), { minimumFractionDigits: min, maximumFractionDigits: max, useGrouping: useGrp() }));
+}
+const money = (x, d = 2) => (x == null || !isFinite(x)) ? '—' : (x < 0 ? '−' : '') + S.cur + nf2(Math.abs(x), d);
+const plain = (x, d = 6) => (x == null || !isFinite(x)) ? '' : String(+(+x).toFixed(d));
+function num(v) {
+  const s = String(v ?? '').replace(/[,\s৳$€£₹]/g, '').trim();
+  if (!s) return null;
+  if (/^-?\d*\.?\d+$/.test(s)) return +s;
+  try { return Calc.evaluate(s, { deg: true }); } catch (e) { return null; }
+}
+function sciNum(x) {
+  if (x == null || !isFinite(x)) return '—';
+  if (x !== 0 && (Math.abs(x) >= 1e15 || Math.abs(x) < 1e-6)) return fmtCalc(x);
+  return nf2(x, 6);
+}
+
+/* ---------- toast & copy ---------- */
+let toastT;
+const toastEl = document.getElementById('toast');
+function toast(msg) {
+  const t = toastEl;
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800);
+}
+function copyText(text, label) {
+  const done = () => toast(label || 'Copied');
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) { }
+    ta.remove();
+    ok ? done() : toast("Couldn't copy here. Long-press the number to copy it.");
+  };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, fallback); return; }
+  } catch (e) { }
+  fallback();
+}
+function onCopyClick(e) {
+  const b = e.target.closest('[data-copy]');
+  if (b && b.dataset.copy !== '') copyText(b.dataset.copy, 'Copied ' + (b.dataset.copy.length > 24 ? '' : b.dataset.copy));
+}
+document.addEventListener('click', onCopyClick);
+const cpBtn = (v, label = 'Copy') => v == null || v === '' ? '' : `<button class="cp" type="button" data-copy="${esc(v)}" aria-label="${esc(label)}">${I.copy}</button>`;
+
+/* ---------- theme ---------- */
+const mqDark = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+function currentTheme() {
+  if (S.theme !== 'auto') return THEMES.find(t => t.id === S.theme) || THEMES[0];
+  const attr = document.documentElement.getAttribute('data-theme');
+  const dark = attr ? attr === 'dark' : !!(mqDark && mqDark.matches);
+  return THEMES.find(t => t.id === (dark ? 'midnight' : 'sky'));
+}
+function applyTheme() {
+  const t = currentTheme(), v = themeVars(t), st = document.documentElement.style;
+  for (const k in v) st.setProperty(k, v[k]);
+  st.colorScheme = t.dark ? 'dark' : 'light';
+  const m = $('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', t.bg);
+}
+mqDark && mqDark.addEventListener && mqDark.addEventListener('change', () => S.theme === 'auto' && applyTheme());
+new MutationObserver(() => S.theme === 'auto' && applyTheme()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+/* ---------- fonts ---------- */
+const FW = { Poppins: '400;500;600;700;800', Lato: '400;700;900', Roboto: '400;500;700;900', Nunito: '400;600;700;800', Manrope: '500;600;700;800',
+  Outfit: '400;500;600;700;800', Rubik: '400;500;600;700;800', Lexend: '400;500;600;700;800', 'Roboto Mono': '400;500;600;700', 'JetBrains Mono': '400;500;600;700;800' };
+const APP_FONTS = ['Poppins', 'Lato', 'Roboto', 'Nunito', 'Manrope'];
+const NUM_FONTS = [
+  ['Outfit', 'Round, clean digits. Best all-round choice', 1],
+  ['Poppins', 'Friendly and round, like many phone calculators'],
+  ['Rubik', 'Soft corners, very easy on the eye'],
+  ['Lexend', 'Made for easy reading, wide and clear'],
+  ['Roboto', 'Classic Android calculator look'],
+  ['Lato', 'Elegant and light'],
+  ['Roboto Mono', 'Every digit the same width, so long sums line up'],
+  ['JetBrains Mono', 'Sharp, technical style'],
+];
+const gfUrl = fams => 'https://fonts.googleapis.com/css2?' + [...new Set(fams)].map(f => `family=${f.replace(/ /g, '+')}:wght@${FW[f]}`).join('&') + '&display=swap';
+function loadFonts(fams, id) {
+  let l = document.getElementById(id);
+  if (!l) { l = document.createElement('link'); l.rel = 'stylesheet'; l.id = id; document.head.appendChild(l); }
+  const href = gfUrl(fams);
+  if (l.getAttribute('href') !== href) l.setAttribute('href', href);
+}
+function applyFonts() {
+  if (!FW[S.font]) S.font = 'Poppins';
+  if (!FW[S.numFont]) S.numFont = 'Outfit';
+  const st = document.documentElement.style, sys = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+  st.setProperty('--f-body', `"${S.font}", ${sys}`);
+  st.setProperty('--f-display', `"${S.font}", ${sys}`);
+  st.setProperty('--f-num', `"${S.numFont}", "${S.font}", ${sys}`);
+  loadFonts([S.font, S.numFont], 'gf');
+}
+
+/* ---------- sheet ---------- */
+function openSheet(title, html, mount) {
+  $('#sheetTitle').textContent = title;
+  const b = $('#sheetBody');
+  b.onclick = null; b.oninput = null; b.onchange = null;
+  b.innerHTML = html; b.scrollTop = 0;
+  $('#sheet').hidden = false;
+  mount && mount(b);
+}
+function closeSheet() { $('#sheet').hidden = true; $('#sheetBody').innerHTML = ''; }
+$('#scrim').onclick = closeSheet;
+$('#sheetClose').innerHTML = I.x;
+$('#sheetClose').onclick = closeSheet;
+
+/* ---------- dashboard ---------- */
+let editMode = false;
+const cname = c => S.names[c.id] || c.name;
+const ccol = c => COLORS[S.colors[c.id]] || COLORS[c.color];
+const csize = c => S.sizes[c.id] || c.size;
+const colStyle = c => { const [a, b] = ccol(c); return `--c1:${a};--c2:${b}`; };
+
+function visibleList() {
+  const q = $('#search').value.trim().toLowerCase();
+  let list = S.order.map(byId).filter(c => c && !S.hidden[c.id]);
+  if (q) list = list.filter(c => (cname(c) + ' ' + c.name + ' ' + c.desc + ' ' + catName(c.cat)).toLowerCase().includes(q));
+  if (S.sort === 'az') list.sort((a, b) => cname(a).localeCompare(cname(b)));
+  if (S.sort === 'cat') {
+    const ci = id => CATS.findIndex(c => c[0] === id);
+    list = list.map((c, i) => [c, i]).sort((a, b) => ci(a[0].cat) - ci(b[0].cat) || a[1] - b[1]).map(x => x[0]);
+  }
+  return list;
+}
+function cardHtml(c) {
+  const sz = csize(c);
+  return `<div class="card sz-${sz}" data-id="${c.id}" style="${colStyle(c)}">
+    <button class="card-hit" type="button" data-open="${c.id}" aria-label="${editMode ? 'Edit' : 'Open'} ${esc(cname(c))}"></button>
+    <span class="cglyph" aria-hidden="true">${esc(c.glyph)}</span>
+    <span class="cicon">${CICON[c.icon]}</span>
+    ${sz === 'l' ? `<span class="ctag">${catName(c.cat)}</span>` : ''}
+    <span class="cname">${esc(cname(c))}</span>
+    ${sz !== 's' ? `<span class="cdesc">${esc(c.desc)}</span>` : ''}
+    ${editMode ? `<div class="cedit">
+      <button type="button" data-mv="-1" aria-label="Move earlier">${I.left}</button>
+      <button type="button" data-size aria-label="Change size">${sz.toUpperCase()}</button>
+      <button type="button" data-hide aria-label="Hide">${I.eyeoff}</button>
+      <button type="button" data-mv="1" aria-label="Move later">${I.right}</button></div>` : ''}
+  </div>`;
+}
+function renderGrid() {
+  const list = visibleList();
+  let html = '';
+  if (S.sort === 'cat') {
+    let last = '';
+    list.forEach(c => { if (c.cat !== last) { last = c.cat; html += `<h2 class="cat-h">${catName(c.cat)}</h2>`; } html += cardHtml(c); });
+  } else html = list.map(cardHtml).join('');
+  if (!list.length) html = `<div class="empty">${$('#search').value ? 'No calculator matches that search.' : 'All cards are hidden. Tap Edit to show them again.'}</div>`;
+  const g = $('#grid');
+  g.innerHTML = html;
+  g.classList.toggle('editing', editMode);
+  $$('#sortSeg button').forEach(b => b.classList.toggle('on', b.dataset.sort === S.sort));
+  const hiddenIds = S.order.filter(id => S.hidden[id]);
+  $('#hiddenWrap').hidden = !editMode || !hiddenIds.length;
+  $('#hiddenList').innerHTML = hiddenIds.map(id => { const c = byId(id); return `<div class="hrow" style="${colStyle(c)}"><i class="dot"></i><span>${esc(cname(c))}</span><button class="btn" type="button" data-show="${id}">Show</button></div>`; }).join('');
+  $('#editBar').hidden = !editMode;
+  $('#editFoot').hidden = !editMode;
+  $('#btnEdit').innerHTML = editMode ? `${I.check}Done` : `${I.pencil}Edit`;
+  $('#btnEdit').classList.toggle('on', editMode);
+  const n = CALCS.length - hiddenIds.length;
+  $('#countLine').textContent = `${n} calculator${n === 1 ? '' : 's'}${hiddenIds.length ? ` · ${hiddenIds.length} hidden` : ''}`;
+}
+function moveCard(id, dir) {
+  if (S.sort !== 'custom' || $('#search').value) {
+    const vis = visibleList().map(c => c.id);
+    S.order = vis.concat(S.order.filter(x => !vis.includes(x)));
+    if (S.sort !== 'custom') { S.sort = 'custom'; toast('Switched to My order'); }
+  }
+  const vis = S.order.filter(x => !S.hidden[x]);
+  const i = vis.indexOf(id);
+  let j = dir === 'first' ? 0 : dir === 'last' ? vis.length - 1 : i + (+dir);
+  j = Math.max(0, Math.min(vis.length - 1, j));
+  if (i === j) return;
+  vis.splice(i, 1); vis.splice(j, 0, id);
+  S.order = vis.concat(S.order.filter(x => S.hidden[x]));
+  save(); renderGrid();
+}
+const nextSize = s => ({ s: 'm', m: 'l', l: 's' }[s]);
+
+$('#grid').addEventListener('click', e => {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const id = card.dataset.id;
+  if (e.target.closest('[data-mv]')) return moveCard(id, e.target.closest('[data-mv]').dataset.mv);
+  if (e.target.closest('[data-size]')) { S.sizes[id] = nextSize(csize(byId(id))); save(); return renderGrid(); }
+  if (e.target.closest('[data-hide]')) { S.hidden[id] = true; save(); toast(`${cname(byId(id))} hidden`); return renderGrid(); }
+  if (e.target.closest('[data-open]')) editMode ? editCard(id) : openCalc(id);
+});
+$('#hiddenList').addEventListener('click', e => {
+  const b = e.target.closest('[data-show]');
+  if (b) { delete S.hidden[b.dataset.show]; save(); renderGrid(); }
+});
+$('#sortSeg').addEventListener('click', e => {
+  const b = e.target.closest('[data-sort]');
+  if (b) { S.sort = b.dataset.sort; save(); renderGrid(); }
+});
+$('#search').addEventListener('input', renderGrid);
+$('#btnEdit').onclick = () => { editMode = !editMode; renderGrid(); };
+$('#btnDone').onclick = () => { editMode = false; renderGrid(); };
+let resetArm = 0;
+$('#btnReset').onclick = () => {
+  const b = $('#btnReset');
+  if (Date.now() - resetArm > 3000) { resetArm = Date.now(); b.textContent = 'Tap again to reset'; setTimeout(() => b.textContent = 'Reset dashboard', 3000); return; }
+  Object.assign(S, { order: CALCS.map(c => c.id), sizes: {}, hidden: {}, names: {}, colors: {}, sort: 'custom' });
+  save(); renderGrid(); b.textContent = 'Reset dashboard'; toast('Dashboard reset');
+};
+
+function editCard(id) {
+  const c = byId(id);
+  const draw = () => {
+    const sz = csize(c), col = S.colors[id] || c.color;
+    return `
+    <label class="fld"><span class="fl">Name</span><span class="fi"><input id="eName" type="text" maxlength="28" value="${esc(cname(c))}" placeholder="${esc(c.name)}" autocomplete="off"></span></label>
+    <div><h4>Size</h4><div class="seg" id="eSize">${[['s', 'Small'], ['m', 'Medium'], ['l', 'Large']].map(([k, l]) => `<button type="button" data-sz="${k}" class="${k === sz ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+    <div><h4>Colour</h4><div class="cgrid">${Object.entries(COLORS).map(([k, [a, b]]) => `<button type="button" data-col="${k}" class="${k === col ? 'on' : ''}" style="--c1:${a};--c2:${b}" aria-label="${k}"></button>`).join('')}</div></div>
+    <div><h4>Position</h4><div class="btn-row"><button class="btn" type="button" data-mv="first">Move to start</button><button class="btn" type="button" data-mv="-1">${I.left}Earlier</button><button class="btn" type="button" data-mv="1">Later${I.right}</button><button class="btn" type="button" data-mv="last">Move to end</button></div></div>
+    <div class="btn-row"><button class="btn danger" type="button" id="eHide">${I.eyeoff}Hide this card</button><button class="btn" type="button" id="eReset">${I.reset}Reset name and colour</button></div>`;
+  };
+  openSheet('Edit card', draw(), b => {
+    b.oninput = e => { if (e.target.id === 'eName') { const v = e.target.value.trim(); if (v && v !== c.name) S.names[id] = v; else delete S.names[id]; save(); renderGrid(); } };
+    b.onclick = e => {
+      const t = e.target.closest('button'); if (!t) return;
+      if (t.dataset.sz) { S.sizes[id] = t.dataset.sz; $$('[data-sz]', b).forEach(x => x.classList.toggle('on', x === t)); }
+      else if (t.dataset.col) { S.colors[id] = t.dataset.col; $$('[data-col]', b).forEach(x => x.classList.toggle('on', x === t)); }
+      else if (t.dataset.mv) { moveCard(id, t.dataset.mv); toast('Moved'); return; }
+      else if (t.id === 'eHide') { S.hidden[id] = true; save(); renderGrid(); closeSheet(); toast(`${cname(c)} hidden`); return; }
+      else if (t.id === 'eReset') { delete S.names[id]; delete S.colors[id]; delete S.sizes[id]; b.innerHTML = draw(); }
+      save(); renderGrid();
+    };
+  });
+}
+
+function themeSheet() {
+  const sw = t => {
+    const v = themeVars(t);
+    const bg = t.img || t.bg;
+    return `<button type="button" class="tsw ${S.theme === t.id ? 'on' : ''}" data-theme-id="${t.id}">
+      <span class="tprev" style="background:${bg}"><i style="background:${v['--key']}"></i><i style="background:${v['--op']}"></i><i style="background:${v['--eq']}"></i></span>
+      <span class="tname">${t.name}</span></button>`;
+  };
+  const html = `
+    <div><button type="button" class="tsw auto ${S.theme === 'auto' ? 'on' : ''}" data-theme-id="auto">
+      <span class="tprev" style="background:linear-gradient(90deg,#e6f1ff 50%,#0a1020 50%)"></span>
+      <span><span class="tname">Match my phone</span><br><span class="note">Sky by day, Midnight at night</span></span></button></div>
+    ${GROUPS.map(([g, label]) => `<div><h4>${label}</h4><div class="tgrid">${THEMES.filter(t => t.group === g).map(sw).join('')}</div></div>`).join('')}
+    <div><h4>App font</h4><div class="fgrid">${APP_FONTS.map(f => `<button type="button" class="fopt ${S.font === f ? 'on' : ''}" data-font="${f}" style="font-family:'${f}',system-ui"><span class="fa">Aa Bb</span><span class="fn">${f}</span></button>`).join('')}</div></div>
+    <div><h4>Number font</h4><div class="nlist">${NUM_FONTS.map(([f, note, rec]) => `<button type="button" class="fopt ${S.numFont === f ? 'on' : ''}" data-numfont="${f}">${rec ? '<span class="rec">Recommended</span>' : ''}<span class="fd" style="font-family:'${f}',system-ui">1234567890 ×÷</span><span class="fn">${f} · ${note}</span></button>`).join('')}</div></div>
+    <div><h4>Settings</h4>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <label class="fld"><span class="fl">Currency symbol</span><span class="fi"><input id="sCur" type="text" maxlength="4" value="${esc(S.cur)}" autocomplete="off"></span></label>
+        <div class="fld"><span class="fl">Number style</span><div class="seg" id="sGrp">${[['intl', '1,234,567'], ['lakh', '12,34,567'], ['none', '1234567']].map(([k, l]) => `<button type="button" data-grp="${k}" class="${S.grp === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+        <button class="btn danger" type="button" id="sWipe">Clear history and saved inputs</button>
+      </div></div>`;
+  loadFonts(APP_FONTS.concat(NUM_FONTS.map(x => x[0])), 'gf-all');
+  openSheet('Themes & settings', html, b => {
+    let wipeArm = 0;
+    b.onclick = e => {
+      const t = e.target.closest('button'); if (!t) return;
+      if (t.dataset.themeId) { S.theme = t.dataset.themeId; applyTheme(); $$('[data-theme-id]', b).forEach(x => x.classList.toggle('on', x === t)); save(); }
+      else if (t.dataset.font) { S.font = t.dataset.font; applyFonts(); $$('[data-font]', b).forEach(x => x.classList.toggle('on', x === t)); save(); toast(`App font: ${S.font}`); }
+      else if (t.dataset.numfont) { S.numFont = t.dataset.numfont; applyFonts(); $$('[data-numfont]', b).forEach(x => x.classList.toggle('on', x === t)); save(); toast(`Number font: ${S.numFont}`); }
+      else if (t.dataset.grp) { S.grp = t.dataset.grp; $$('[data-grp]', b).forEach(x => x.classList.toggle('on', x === t)); save(); refreshCalc(); }
+      else if (t.id === 'sWipe') {
+        if (Date.now() - wipeArm > 3000) { wipeArm = Date.now(); t.textContent = 'Tap again to clear'; return; }
+        S.hist = { basic: [], sci: [] }; S.inputs = {}; S.mem = 0; S.ans = 0; save(); t.textContent = 'Cleared'; refreshCalc();
+      }
+    };
+    b.oninput = e => { if (e.target.id === 'sCur') { S.cur = e.target.value; save(); refreshCalc(); } };
+  });
+}
+$('#btnTheme').innerHTML = I.palette;
+$('#btnTheme').onclick = themeSheet;
+$('#searchIcon').outerHTML = I.search;
+
+/* ---------- calculator view ---------- */
+let cur = null, pushed = false;
+function openCalc(id, push = true) {
+  const c = byId(id); if (!c) return;
+  cur = id; keyHandler = null;
+  const v = $('#calcView');
+  v.setAttribute('style', colStyle(c));
+  $('#calcTitle').textContent = cname(c);
+  $('#cbarActions').innerHTML = '';
+  $('#abar').hidden = true;
+  const body = $('#calcBody');
+  body.innerHTML = ''; body.className = ''; body.scrollTop = 0;
+  body.oninput = null; body.onchange = null; body.onclick = null;
+  v.hidden = false;
+  document.body.classList.add('in-calc');
+  (MOUNT[id])(body);
+  if (push) { try { history.pushState({ calc: id }, ''); pushed = true; } catch (e) { pushed = false; } }
+}
+function closeCalc() {
+  $('#calcView').hidden = true; cur = null; keyHandler = null;
+  $('#calcBody').innerHTML = '';
+  document.body.classList.remove('in-calc');
+  renderGrid();
+}
+function refreshCalc() { if (cur) openCalc(cur, false); renderGrid(); }
+$('#btnBack').innerHTML = I.back;
+$('#btnBack').onclick = () => {
+  const go = () => { if (pushed && history.state && history.state.calc) history.back(); else closeCalc(); };
+  if (pipWin) { pipWin.close(); setTimeout(go, 120); } else go();
+};
+
+/* floating window (Chrome on a computer) */
+let pipWin = null;
+const canFloat = () => 'documentPictureInPicture' in window;
+async function floatCalc() {
+  if (!canFloat()) return toast('Floating works in Chrome on a computer.');
+  if (pipWin) return;
+  try {
+    const pip = await window.documentPictureInPicture.requestWindow({ width: 380, height: 660 });
+    pipWin = pip;
+    document.querySelectorAll('style, link[rel="stylesheet"]').forEach(n => pip.document.head.appendChild(n.cloneNode(true)));
+    const root = pip.document.documentElement;
+    root.setAttribute('style', document.documentElement.getAttribute('style') || '');
+    pip.document.title = 'Calculator Ultra';
+    const v = $('#calcView'), wrap = $('.cwrap', v);
+    pip.document.body.style.cssText = (v.getAttribute('style') || '') + ';margin:0;height:100vh;display:flex;flex-direction:column;padding:6px 12px 10px;box-sizing:border-box;background:var(--bg);background-image:var(--bg-img);color:var(--fg);font:500 15px/1.45 var(--f-body)';
+    pip.document.body.append(wrap, toastEl);
+    $('#floatNote').hidden = false;
+    pip.document.addEventListener('click', onCopyClick);
+    pip.document.addEventListener('keydown', onKey);
+    pip.addEventListener('pagehide', () => {
+      v.insertBefore(wrap, v.firstChild); document.body.appendChild(toastEl);
+      $('#floatNote').hidden = true; pipWin = null;
+    });
+  } catch (e) { pipWin = null; toast("Couldn't open a floating window here."); }
+}
+$('#btnUnfloat').onclick = () => pipWin && pipWin.close();
+window.addEventListener('popstate', e => {
+  if (!$('#sheet').hidden) closeSheet();
+  if (e.state && e.state.calc) openCalc(e.state.calc, false); else if (cur) closeCalc();
+});
+function setBar(label, value, copy, sub) {
+  const a = $('#abar');
+  if (label == null) { a.hidden = true; return; }
+  a.hidden = false;
+  a.innerHTML = `<div><div class="al">${label}</div><div class="av">${value}</div>${sub ? `<div class="as">${sub}</div>` : ''}</div>${copy != null && copy !== '' ? `<button class="cp" type="button" data-copy="${esc(copy)}" aria-label="Copy result">${I.copy}</button>` : ''}`;
+}
+function addAction(html, onClick) {
+  const w = document.createElement('div'); w.innerHTML = html;
+  const b = w.firstElementChild; b.onclick = onClick;
+  $('#cbarActions').appendChild(b);
+  return b;
+}
+
+/* ---------- keypad calculators (basic + scientific) ---------- */
+let keyHandler = null;
+function onKey(e) {
+  if (!keyHandler || !$('#sheet').hidden) return;
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  keyHandler(e);
+}
+document.addEventListener('keydown', onKey);
+
+const BASIC_KEYS = [
+  { l: 'AC', a: 'ac', c: 'fn ac' }, { l: '( )', a: 'paren', c: 'fn' }, { l: '%', c: 'fn' }, { l: '÷', c: 'op' },
+  { l: '7' }, { l: '8' }, { l: '9' }, { l: '×', c: 'op' },
+  { l: '4' }, { l: '5' }, { l: '6' }, { l: '−', c: 'op' },
+  { l: '1' }, { l: '2' }, { l: '3' }, { l: '+', c: 'op' },
+  { l: '0' }, { l: '.' }, { l: '⌫', a: 'del', c: 'del', aria: 'Delete' }, { l: '=', a: 'eq', c: 'eq' },
+];
+const SCI_KEYS = [
+  { l: '2nd', a: '2nd', c: 'fn' }, { l: 'sin', i: 'sin(', s: 'sin⁻¹', trig: 'sin', c: 'fn' }, { l: 'cos', i: 'cos(', s: 'cos⁻¹', trig: 'cos', c: 'fn' }, { l: 'tan', i: 'tan(', s: 'tan⁻¹', trig: 'tan', c: 'fn' }, { l: 'π', s: 'e', si: 'e', c: 'fn' },
+  { l: 'ln', i: 'ln(', s: 'eˣ', si: 'e^(', c: 'fn' }, { l: 'log', i: 'log(', s: '10ˣ', si: '10^(', c: 'fn' }, { l: '√', i: '√(', s: '∛', si: '∛(', c: 'fn' }, { l: 'x²', i: '²', s: 'x³', si: '³', c: 'fn' }, { l: 'xʸ', i: '^', s: '1/x', si: '⁻¹', c: 'fn' },
+  { l: '(', c: 'fn' }, { l: ')', c: 'fn' }, { l: 'n!', i: '!', s: 'nCr', si: 'C', c: 'fn' }, { l: 'mod', i: 'mod', s: 'nPr', si: 'P', c: 'fn' }, { l: '%', s: '|x|', si: 'abs(', c: 'fn' },
+  { l: '7' }, { l: '8' }, { l: '9' }, { l: '⌫', a: 'del', c: 'fn', aria: 'Delete' }, { l: 'AC', a: 'ac', c: 'fn ac' },
+  { l: '4' }, { l: '5' }, { l: '6' }, { l: '×', c: 'op' }, { l: '÷', c: 'op' },
+  { l: '1' }, { l: '2' }, { l: '3' }, { l: '+', c: 'op' }, { l: '−', c: 'op' },
+  { l: '0' }, { l: '.' }, { l: 'EE', i: 'E', s: 'Rand', si: 'rand', c: 'fn' }, { l: 'Ans', s: 'log₂', si: 'log₂(', c: 'fn' }, { l: '=', a: 'eq', c: 'eq' },
+];
+const MULTI = ['sinh⁻¹(', 'cosh⁻¹(', 'tanh⁻¹(', 'sin⁻¹(', 'cos⁻¹(', 'tan⁻¹(', 'sinh(', 'cosh(', 'tanh(', 'sin(', 'cos(', 'tan(',
+  'log₂(', 'log(', 'ln(', 'abs(', '√(', '∛(', 'e^(', '10^(', 'Ans', 'rand', 'mod', '⁻¹'];
+const BIN = '+−×÷^';
+const sanitize = s => String(s).replace(/(\d)\s*[xX]\s*(?=[\d(])/g, '$1×').replace(/\*/g, '×').replace(/\//g, '÷').replace(/[-–—]/g, '−').replace(/[,\s]/g, '');
+const mathPart = s => s.replace(/\*/g, '×').replace(/\//g, '÷').replace(/[–—]/g, '−').replace(/([\d)%²³!+−×÷(]\s*)-/g, '$1−').replace(/,/g, '').replace(/\s+/g, ' ');
+function sanitizeLabels(s) {
+  s = String(s).replace(/(\d)\s*[xX]\s*(?=[\d(])/g, '$1×').replace(/\n/g, ' ');
+  let out = '', last = 0;
+  s.replace(Calc.LABEL_RE, (m, off) => { out += mathPart(s.slice(last, off)) + m; last = off + m.length; return m; });
+  return out + mathPart(s.slice(last));
+}
+const STARTERS = /^([\d.(πe√∛]|Ans|rand|sin|cos|tan|log|ln|abs|10\^)/;
+const timeStr = t => {
+  const d = new Date(t), now = new Date();
+  const hm = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return d.toDateString() === now.toDateString() ? `Today ${hm}` : `${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} ${hm}`;
+};
+
+function mountKeypad(cid, body) {
+  const sci = cid === 'sci';
+  const H = S.hist[cid];
+  const keys = sci ? SCI_KEYS : BASIC_KEYS;
+  const labels = !sci;
+  const san = labels ? sanitizeLabels : sanitize;
+  const st = { just: false, editing: null, second: false, hyp: false, caret: null, text: false };
+  body.className = 'fixed';
+  body.innerHTML = `<div class="calc ${sci ? 'is-sci' : ''} ${S.noteOn ? 'with-note' : ''}">
+    <div class="screen">
+      <div class="tape" id="tape"></div>
+      <div class="edit-chip" id="editChip" hidden><span>Editing a saved line</span><button type="button" id="editCancel">Cancel</button></div>
+      <textarea id="expr" class="expr" rows="1" inputmode="none" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="0" aria-label="Calculation"></textarea>
+      <div class="preview" id="preview"></div>
+      <div class="screen-bar"><div class="flags" id="flags"></div>
+        ${labels ? '<button class="mini" type="button" id="btnText" aria-label="Type words">Aa</button>' : ''}
+        <button class="mini" type="button" id="btnCopy">${I.copy}Copy</button>
+        <button class="mini" type="button" id="btnClearScreen" aria-label="Clear the screen">Clear</button>
+        <button class="mini" type="button" id="btnPaste">${I.paste}Paste</button></div>
+    </div>
+    ${sci ? '<div class="pills" id="pills"></div>' : ''}
+    <div class="keys ${sci ? 'k5' : 'k4'}" id="keys"></div>
+    <div class="notes" id="notes">
+      <div class="nbar"><strong>Note</strong>
+        <button class="mini" type="button" data-n="res">+ Result</button>
+        <button class="mini" type="button" data-n="line">+ Line</button>
+        <button class="mini" type="button" data-n="copy">${I.copy}Copy</button>
+        <button class="mini" type="button" data-n="clear">Clear</button></div>
+      <textarea id="noteTa" spellcheck="true" placeholder="Write your notes here. Tap + Result to drop in the answer."></textarea>
+    </div>
+  </div>`;
+  const ta = $('#expr', body), pv = $('#preview', body), keysEl = $('#keys', body);
+  const calcEl = $('.calc', body);
+  if (canFloat()) addAction(`<button class="icon-btn" type="button" aria-label="Float in a small window">${I.float}</button>`, floatCalc);
+  const noteBtn = addAction(`<button class="icon-btn ${S.noteOn ? 'pill-on' : ''}" type="button" aria-label="Show note">${I.note}</button>`, () => {
+    S.noteOn = !S.noteOn; save();
+    calcEl.classList.toggle('with-note', !!S.noteOn); noteBtn.classList.toggle('pill-on', !!S.noteOn); fit();
+  });
+  const histBtn = addAction(`<button class="icon-btn badge-btn" type="button" aria-label="History">${I.clock}<b hidden></b></button>`, () => historySheet());
+
+  const ans = () => S.ans || 0;
+  const evalStr = v => Calc.evaluate(labels ? Calc.stripLabels(v) : v, { deg: S.angle === 'deg', ans: ans() });
+
+  function drawKeys() {
+    keysEl.innerHTML = keys.map((k, i) => {
+      let main = k.l, sub = k.s || '';
+      if (k.trig) { const h = st.hyp ? 'h' : ''; main = k.trig + h; sub = k.trig + h + '⁻¹'; }
+      if (st.second && k.s) [main, sub] = [k.trig ? sub : k.s, k.trig ? main : k.l];
+      const on = (k.a === '2nd' && st.second) ? ' on' : '';
+      return `<button type="button" class="key ${k.c || 'num'}${on}" data-i="${i}" aria-label="${esc(k.aria || main)}">${sci && sub ? `<small>${esc(sub)}</small>` : ''}<span>${esc(main)}</span></button>`;
+    }).join('');
+  }
+  function drawPills() {
+    if (!sci) return;
+    $('#pills', body).innerHTML = `
+      <button type="button" class="pill on" data-p="angle">${S.angle === 'deg' ? 'DEG' : 'RAD'}</button>
+      <button type="button" class="pill ${st.hyp ? 'on' : ''}" data-p="hyp">HYP</button>
+      <button type="button" class="pill" data-p="mc">MC</button>
+      <button type="button" class="pill" data-p="mr">MR</button>
+      <button type="button" class="pill" data-p="m+">M+</button>
+      <button type="button" class="pill" data-p="m-">M−</button>`;
+  }
+  function drawFlags() {
+    const f = [];
+    if (sci) f.push(S.angle === 'deg' ? 'DEG' : 'RAD');
+    if (st.second) f.push('2ND');
+    if (st.hyp) f.push('HYP');
+    if (sci && S.mem) f.push('M');
+    $('#flags', body).textContent = f.join(' · ');
+    const b = histBtn.querySelector('b');
+    b.hidden = !H.length; b.textContent = H.length > 99 ? '99+' : H.length;
+  }
+  function drawTape() {
+    const cut = (S.tapeCut || {})[cid] || 0;
+    const last = H.filter(h => h.t > cut).slice(-4);
+    $('#tape', body).innerHTML = last.map(h => `<button type="button" class="tline" data-id="${h.id}" aria-label="Edit ${esc(h.e)}">${esc(h.e)} = <b>${fmtCalc(h.r)}</b></button>`).join('');
+    const t = $('#tape', body); t.scrollTop = t.scrollHeight;
+    drawFlags();
+  }
+  function fit() {
+    const n = ta.value.length, big = calcEl.classList.contains('with-note') ? (sci ? 28 : 34) : sci ? 38 : 46;
+    const size = n <= 9 ? big : n <= 14 ? big * .78 : n <= 20 ? big * .64 : big * .54;
+    ta.style.fontSize = size + 'px';
+    ta.style.height = 'auto';
+    const max = Math.round(size * 1.16 * 3 + 4);
+    ta.style.height = Math.min(ta.scrollHeight, max) + 'px';
+    ta.style.overflowY = ta.scrollHeight > max ? 'auto' : 'hidden';
+  }
+  function preview() {
+    const v = ta.value;
+    pv.classList.remove('err');
+    if (!v || st.just) { pv.textContent = ''; return; }
+    if (!/[+−×÷^%!²³⁻(]|mod|[a-zA-Zπ√∛]/.test(v.replace(/^−/, ''))) { pv.textContent = ''; return; }
+    try { pv.textContent = '= ' + fmtCalc(evalStr(v)); } catch (e) { pv.textContent = ''; }
+  }
+  const caret = () => {
+    const c = ta.ownerDocument.activeElement === ta ? ta.selectionStart : st.caret;
+    return c == null ? ta.value.length : Math.max(0, Math.min(c, ta.value.length));
+  };
+  function setVal(v, c) {
+    ta.value = v;
+    st.caret = c == null ? v.length : c;
+    try { ta.setSelectionRange(st.caret, st.caret); } catch (e) { }
+    fit(); preview();
+  }
+  function insert(txt) {
+    let v = ta.value, c = caret();
+    if (st.just) {
+      st.just = false;
+      if (STARTERS.test(txt)) { v = ''; c = 0; } else c = v.length;
+    }
+    let prev = v.slice(0, c);
+    const next = v.slice(c), last = prev.slice(-1);
+    if (txt.length === 1 && BIN.includes(txt)) {
+      if (prev === '' && txt !== '−') { if (!H.length) return; prev = rawCalc(ans()).replace(/-/g, '−'); }
+      else if (BIN.includes(last)) { if (!(txt === '−' && '×÷^'.includes(last))) prev = prev.slice(0, -1); }
+      else if (last === '(' && txt !== '−') return;
+    } else if (txt === '.') {
+      const m = /[\d.]*$/.exec(prev)[0];
+      if (m.includes('.')) return;
+      if (m === '') txt = '0.';
+    } else if (txt === 'E') {
+      if (/E[\d−]*$/.test(prev)) return;
+      if (!/\d$/.test(prev)) txt = '1E';
+    } else if (/^[%!²³]$|^⁻¹$/.test(txt)) {
+      if (prev === '' || BIN.includes(last) || last === '(') return;
+    } else if (txt === ')') {
+      const o = (prev.match(/\(/g) || []).length, cl = (prev.match(/\)/g) || []).length;
+      if (o <= cl || last === '(') return;
+    } else if (/^\d$/.test(txt) && /(^|[^\d.E])0$/.test(prev)) {
+      prev = prev.slice(0, -1);
+    }
+    if (labels && /^[\d.(]/.test(txt) && /\p{L}$/u.test(prev)) txt = ' ' + txt;
+    setVal(prev + txt + next, prev.length + txt.length);
+  }
+  function insertNumber(n) {
+    let s = rawCalc(n).replace(/-/g, '−');
+    if (st.just) { setVal(s); st.just = false; return; }
+    const c = caret(), prev = ta.value.slice(0, c);
+    if (s.startsWith('−') && prev && !/[(]$/.test(prev)) s = `(${s})`;
+    if (/[\d.)πe!%²³]$/.test(prev)) s = '×' + s;
+    setVal(prev + s + ta.value.slice(c), c + s.length);
+  }
+  function smartParen() {
+    const prev = ta.value.slice(0, caret());
+    const o = (prev.match(/\(/g) || []).length, cl = (prev.match(/\)/g) || []).length;
+    insert(o > cl && /[\d.)πe!%²³]$/.test(prev) ? ')' : '(');
+  }
+  function del() {
+    if (st.just) { st.just = false; }
+    const v = ta.value, c = caret();
+    if (c === 0) return;
+    const prev = v.slice(0, c);
+    let n = 1;
+    for (const m of MULTI) if (prev.endsWith(m)) { n = m.length; break; }
+    setVal(prev.slice(0, -n) + v.slice(c), c - n);
+  }
+  function clearAll() {
+    st.just = false; st.editing = null; $('#editChip', body).hidden = true;
+    setVal('');
+  }
+  function equals() {
+    const v = ta.value;
+    if (!v || st.just) return;
+    let r;
+    try { r = evalStr(v); } catch (e) { pv.textContent = e.message; pv.classList.add('err'); return; }
+    const e = (v.match(/\(/g) || []).length - (v.match(/\)/g) || []).length;
+    const expr = v + ')'.repeat(Math.max(0, e));
+    if (st.editing) {
+      const h = H.find(x => x.id === st.editing);
+      if (h) { h.e = expr; h.r = r; h.t = Date.now(); }
+      st.editing = null; $('#editChip', body).hidden = true;
+      toast('Saved line updated');
+    } else {
+      H.push({ id: uid(), e: expr, r, t: Date.now() });
+      if (H.length > 300) H.splice(0, H.length - 300);
+    }
+    S.ans = r; save();
+    drawTape();
+    setVal(fmtCalc(r, false));
+    st.just = true; pv.textContent = '';
+    ta.blur();
+  }
+  function loadEdit(id) {
+    const h = H.find(x => x.id === id); if (!h) return;
+    st.editing = id; st.just = false;
+    $('#editChip', body).hidden = false;
+    setVal(h.e);
+    try { ta.focus({ preventScroll: true }); ta.setSelectionRange(h.e.length, h.e.length); } catch (e) { }
+  }
+  function memVal() {
+    if (st.just) return S.ans;
+    try { return ta.value ? evalStr(ta.value) : 0; } catch (e) { toast('Finish the sum first'); return null; }
+  }
+  const textBtn = $('#btnText', body);
+  function textMode(on) {
+    st.text = on;
+    ta.setAttribute('inputmode', on ? 'text' : 'none');
+    ta.setAttribute('autocapitalize', on ? 'words' : 'off');
+    if (textBtn) textBtn.classList.toggle('on', on);
+    if (on) {
+      if (st.just) { st.just = false; setVal(''); }
+      const c = caret(), prev = ta.value.slice(0, c);
+      if (prev && !/\s$/.test(prev)) setVal(prev + ' ' + ta.value.slice(c), c + 1);
+      ta.blur(); ta.focus();
+      try { ta.setSelectionRange(st.caret, st.caret); } catch (e) { }
+    }
+  }
+  if (textBtn) {
+    textBtn.addEventListener('pointerdown', e => e.preventDefault());
+    textBtn.onclick = () => textMode(!st.text);
+  }
+  function press(k) {
+    if (st.text) { st.caret = ta.selectionStart; textMode(false); ta.blur(); }
+    if (k.a === 'ac') return clearAll();
+    if (k.a === 'del') return del();
+    if (k.a === 'eq') return equals();
+    if (k.a === 'paren') return smartParen();
+    if (k.a === '2nd') { st.second = !st.second; drawKeys(); drawFlags(); return; }
+    let txt;
+    if (k.trig) {
+      const h = st.hyp ? 'h' : '';
+      txt = k.trig + h + (st.second ? '⁻¹' : '') + '(';
+    } else if (st.second && k.si) txt = k.si;
+    else txt = k.i || k.l;
+    if (st.second && k.s) { st.second = false; drawKeys(); drawFlags(); }
+    insert(txt);
+  }
+
+  keysEl.addEventListener('pointerdown', e => { if (e.target.closest('.key')) e.preventDefault(); });
+  keysEl.addEventListener('click', e => { const b = e.target.closest('.key'); if (b) press(keys[+b.dataset.i]); });
+  if (sci) {
+    const pills = $('#pills', body);
+    pills.addEventListener('pointerdown', e => e.preventDefault());
+    pills.addEventListener('click', e => {
+      const p = e.target.closest('[data-p]'); if (!p) return;
+      const a = p.dataset.p;
+      if (a === 'angle') { S.angle = S.angle === 'deg' ? 'rad' : 'deg'; save(); preview(); }
+      else if (a === 'hyp') { st.hyp = !st.hyp; drawKeys(); }
+      else if (a === 'mc') { S.mem = 0; save(); toast('Memory cleared'); }
+      else if (a === 'mr') { insertNumber(S.mem || 0); }
+      else { const v = memVal(); if (v == null) return; S.mem = (S.mem || 0) + (a === 'm+' ? v : -v); save(); toast(`Memory: ${fmtCalc(S.mem)}`); }
+      drawPills(); drawFlags();
+    });
+  }
+  $('#tape', body).addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (b) loadEdit(b.dataset.id); });
+  $('#editCancel', body).onclick = clearAll;
+  ['click', 'keyup', 'select', 'blur'].forEach(ev => ta.addEventListener(ev, () => { st.caret = ta.selectionStart; }));
+  ta.addEventListener('blur', () => { if (st.text) { st.text = false; ta.setAttribute('inputmode', 'none'); if (textBtn) textBtn.classList.remove('on'); } });
+  ta.addEventListener('focus', () => { if (st.just) { st.just = false; } });
+  ta.addEventListener('input', () => {
+    const c = ta.selectionStart, v = ta.value;
+    const nv = san(v), nc = san(v.slice(0, c)).length;
+    if (nv !== v) { ta.value = nv; try { ta.setSelectionRange(nc, nc); } catch (e) { } }
+    st.caret = nc; st.just = false; fit(); preview();
+  });
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); equals(); }
+    else if (e.key === 'Escape') { e.preventDefault(); clearAll(); }
+  });
+  keyHandler = e => {
+    const k = e.key;
+    if (/^[0-9.]$/.test(k) || '+-*/^()%!'.includes(k)) { e.preventDefault(); insert(sanitize(k)); }
+    else if (k === 'Enter' || k === '=') { e.preventDefault(); equals(); }
+    else if (k === 'Backspace') { e.preventDefault(); del(); }
+    else if (k === 'Escape') { e.preventDefault(); clearAll(); }
+  };
+  $('#btnClearScreen', body).addEventListener('pointerdown', e => e.preventDefault());
+  $('#btnClearScreen', body).onclick = () => {
+    S.tapeCut = S.tapeCut || {};
+    S.tapeCut[cid] = Date.now(); save();
+    clearAll(); drawTape();
+    toast('Screen cleared. Full history is still saved.');
+  };
+  $('#btnCopy', body).onclick = () => {
+    const v = ta.value;
+    if (!v) return toast('Nothing to copy yet');
+    let r = null;
+    try { r = evalStr(v); } catch (e) { }
+    if (r != null) copyText(rawCalc(r), 'Copied ' + rawCalc(r)); else copyText(v, 'Copied the sum');
+  };
+  $('#btnPaste', body).onclick = () => {
+    const fail = () => toast('Long-press the display, then tap Paste');
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.readText) return fail();
+      navigator.clipboard.readText().then(t => {
+        const s = san(t || '').trim();
+        if (!s) return toast('Clipboard is empty');
+        if (st.just) { st.just = false; setVal(''); }
+        const c = caret();
+        setVal(ta.value.slice(0, c) + s + ta.value.slice(c), c + s.length);
+      }, fail);
+    } catch (e) { fail(); }
+  };
+
+  const noteTa = $('#noteTa', body);
+  let noteCaret = null;
+  noteTa.value = S.note || '';
+  noteTa.addEventListener('input', () => { S.note = noteTa.value; save(); });
+  ['click', 'keyup', 'blur'].forEach(ev => noteTa.addEventListener(ev, () => { noteCaret = noteTa.selectionStart; }));
+  function currentResult() {
+    if (st.just) return S.ans;
+    try { if (ta.value) return evalStr(ta.value); } catch (e) { }
+    return H.length ? H[H.length - 1].r : null;
+  }
+  function noteAdd(text, ownLine) {
+    const v = noteTa.value;
+    let pos = noteTa.ownerDocument.activeElement === noteTa ? noteTa.selectionStart : noteCaret;
+    if (pos == null || pos > v.length) pos = v.length;
+    const pre = v.slice(0, pos), post = v.slice(pos);
+    let add = text;
+    if (ownLine) { if (pre && !pre.endsWith('\n')) add = '\n' + add; add += '\n'; }
+    else if (pre && !/\s$/.test(pre)) add = ' ' + add;
+    noteTa.value = pre + add + post; noteCaret = pre.length + add.length;
+    S.note = noteTa.value; save();
+    noteTa.scrollTop = noteTa.scrollHeight;
+  }
+  let noteClearArm = 0;
+  $('.nbar', body).addEventListener('click', e => {
+    const b = e.target.closest('[data-n]'); if (!b) return;
+    const a = b.dataset.n;
+    if (a === 'res') { const r = currentResult(); if (r == null) return toast('No result yet'); noteAdd(fmtCalc(r)); toast('Result added to note'); }
+    else if (a === 'line') {
+      let line = null;
+      if (st.just && H.length) { const h = H[H.length - 1]; line = `${h.e} = ${fmtCalc(h.r)}`; }
+      else if (ta.value) { try { line = `${ta.value} = ${fmtCalc(evalStr(ta.value))}`; } catch (e) { } }
+      else if (H.length) { const h = H[H.length - 1]; line = `${h.e} = ${fmtCalc(h.r)}`; }
+      if (!line) return toast('Finish the sum first');
+      noteAdd(line, true); toast('Line added to note');
+    }
+    else if (a === 'copy') { if (!noteTa.value.trim()) return toast('The note is empty'); copyText(noteTa.value, 'Note copied'); }
+    else if (a === 'clear') {
+      if (!noteTa.value) return;
+      if (Date.now() - noteClearArm > 3000) { noteClearArm = Date.now(); b.textContent = 'Tap again'; setTimeout(() => b.textContent = 'Clear', 3000); return; }
+      noteTa.value = ''; S.note = ''; save(); b.textContent = 'Clear';
+    }
+  });
+
+  function historySheet() {
+    const draw = () => {
+      if (!H.length) return `<p class="hempty">No calculations yet. Press = to save one here.</p>`;
+      return `<div class="btn-row"><button class="btn" type="button" data-all="copy">${I.copy}Copy all</button><button class="btn danger" type="button" data-all="clear">Clear all</button></div>
+      <div>${H.slice().reverse().map(h => `<div class="hitem" data-id="${h.id}">
+        <button type="button" class="hmain" data-act="toggle"><span class="he">${esc(h.e)}</span><span class="hr">= ${fmtCalc(h.r)}</span><span class="ht">${timeStr(h.t)}</span></button>
+        <div class="hacts" hidden>
+          <button class="btn pri" type="button" data-act="edit">${I.pencil}Edit</button>
+          <button class="btn" type="button" data-act="use">Use result</button>
+          <button class="btn" type="button" data-act="copy">${I.copy}Result</button>
+          <button class="btn" type="button" data-act="line">${I.copy}Whole line</button>
+          <button class="btn danger" type="button" data-act="del">Delete</button>
+        </div></div>`).join('')}</div>`;
+    };
+    openSheet(`History (${H.length})`, draw(), b => {
+      let clearArm = 0;
+      b.onclick = e => {
+        const t = e.target.closest('button'); if (!t) return;
+        if (t.dataset.all === 'copy') return copyText(H.map(h => `${h.e} = ${rawCalc(h.r)}`).join('\n'), `Copied ${H.length} lines`);
+        if (t.dataset.all === 'clear') {
+          if (Date.now() - clearArm > 3000) { clearArm = Date.now(); t.textContent = 'Tap again to clear'; return; }
+          H.splice(0); save(); drawTape(); b.innerHTML = draw(); $('#sheetTitle').textContent = 'History (0)'; return;
+        }
+        const item = t.closest('.hitem'); if (!item) return;
+        const h = H.find(x => x.id === item.dataset.id); if (!h) return;
+        const act = t.dataset.act;
+        if (act === 'toggle') { const a = $('.hacts', item); const open = a.hidden; $$('.hacts', b).forEach(x => x.hidden = true); a.hidden = !open; }
+        else if (act === 'edit') { closeSheet(); loadEdit(h.id); }
+        else if (act === 'use') { closeSheet(); insertNumber(h.r); }
+        else if (act === 'copy') copyText(rawCalc(h.r), 'Copied ' + rawCalc(h.r));
+        else if (act === 'line') copyText(`${h.e} = ${rawCalc(h.r)}`, 'Copied the line');
+        else if (act === 'del') {
+          H.splice(H.indexOf(h), 1); save(); item.remove(); drawTape();
+          if (st.editing === h.id) clearAll();
+          $('#sheetTitle').textContent = `History (${H.length})`;
+          if (!H.length) b.innerHTML = draw();
+        }
+      };
+    });
+  }
+
+  drawKeys(); drawPills(); drawTape(); setVal('');
+}
+
+/* ---------- form helpers ---------- */
+const inputs = cid => S.inputs[cid] || (S.inputs[cid] = {});
+let F = null; // current form calc id
+const gv = (k, d) => { const v = inputs(F)[k]; return v == null ? d : v; };
+const nf = (k, label, def, o = {}) => `<label class="fld ${o.cls || ''}" ${o.id ? `id="${o.id}"` : ''}><span class="fl">${label}</span><span class="fi">${o.pre ? `<b class="aff">${o.pre}</b>` : ''}<input data-k="${k}" type="text" inputmode="decimal" autocomplete="off" value="${esc(gv(k, def))}"${o.ph ? ` placeholder="${esc(o.ph)}"` : ''}>${o.suf ? `<b class="aff">${o.suf}</b>` : ''}</span></label>`;
+const sf = (k, label, opts, def, o = {}) => `<label class="fld" ${o.id ? `id="${o.id}"` : ''}><span class="fl">${label}</span><span class="fi sel"><select data-k="${k}">${opts.map(([v, l]) => `<option value="${esc(v)}"${String(v) === String(gv(k, def)) ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></span></label>`;
+const df = (k, label, def, o = {}) => `<label class="fld" ${o.id ? `id="${o.id}"` : ''}><span class="fl">${label}</span><span class="fi"><input data-k="${k}" type="date" value="${esc(k.startsWith('t_') ? def : gv(k, def))}"></span></label>`;
+const seg = (k, opts, def) => `<div class="seg" data-seg="${k}">${opts.map(([v, l]) => `<button type="button" data-val="${v}" class="${String(v) === String(gv(k, def)) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+const chips = (k, vals, suf = '') => `<div class="chips" data-chips="${k}">${vals.map(v => `<button type="button" data-v="${v}">${v}${suf}</button>`).join('')}</div>`;
+const panel = (title, inner, o = {}) => `<section class="panel" ${o.id ? `id="${o.id}"` : ''}${o.hidden ? ' hidden' : ''}>${title ? `<h3>${title}</h3>` : ''}${inner}</section>`;
+const ires = (label, value, copy) => `<div class="ires"><div><div class="il">${label}</div><div class="iv">${value}</div></div>${cpBtn(copy)}</div>`;
+const res = (label, value, copy, cls = '') => `<div class="res"><span class="rl">${label}</span><span class="rv ${cls}">${value}</span>${cpBtn(copy)}</div>`;
+
+function mountForm(cid, body, html, compute, o = {}) {
+  F = cid;
+  body.innerHTML = `<div class="form">${html}</div>`;
+  const read = () => {
+    const v = {};
+    $$('[data-k]', body).forEach(el => { v[el.dataset.k] = el.value; });
+    $$('[data-seg]', body).forEach(sg => { const on = $('.on', sg); if (on) v[sg.dataset.seg] = on.dataset.val; });
+    return v;
+  };
+  const syncChips = () => $$('[data-chips]', body).forEach(ch => {
+    const inp = $(`[data-k="${ch.dataset.chips}"]`, body);
+    $$('button', ch).forEach(b => b.classList.toggle('on', inp && num(inp.value) === +b.dataset.v));
+  });
+  const run = () => {
+    const v = read();
+    const store = inputs(cid);
+    for (const k in v) if (!k.startsWith('t_')) store[k] = v[k];
+    save(); syncChips();
+    compute(v, body);
+  };
+  body.oninput = e => { if (o.onInput && o.onInput(e) === false) return; run(); };
+  body.onchange = run;
+  body.onclick = e => {
+    const sb = e.target.closest('[data-seg] button');
+    if (sb) { $$('button', sb.parentElement).forEach(b => b.classList.toggle('on', b === sb)); run(); return; }
+    const cb = e.target.closest('[data-chips] button');
+    if (cb) { const inp = $(`[data-k="${cb.parentElement.dataset.chips}"]`, body); if (inp) { inp.value = cb.dataset.v; run(); } return; }
+    if (o.onClick) o.onClick(e, run);
+  };
+  addAction(`<button class="icon-btn" type="button" aria-label="Reset this calculator">${I.reset}</button>`, () => {
+    delete S.inputs[cid]; save(); openCalc(cid, false); toast('Reset to example values');
+  });
+  run();
+}
+
+/* ---------- unit tables ---------- */
+const UNITS = {
+  length: ['Length', [['mm', 'Millimetre', .001], ['cm', 'Centimetre', .01], ['m', 'Metre', 1], ['km', 'Kilometre', 1000], ['in', 'Inch', .0254], ['ft', 'Foot', .3048], ['yd', 'Yard', .9144], ['mi', 'Mile', 1609.344], ['nmi', 'Nautical mile', 1852]]],
+  weight: ['Weight', [['mg', 'Milligram', 1e-6], ['g', 'Gram', .001], ['kg', 'Kilogram', 1], ['t', 'Tonne', 1000], ['oz', 'Ounce', .028349523125], ['lb', 'Pound', .45359237], ['st', 'Stone', 6.35029318], ['seer', 'Seer', .933105], ['mon', 'Maund (mon)', 37.3242]]],
+  temp: ['Temperature', [['C', 'Celsius'], ['F', 'Fahrenheit'], ['K', 'Kelvin']]],
+  pressure: ['Pressure', [['mmHg', 'mmHg', 133.322387], ['cmH2O', 'cmH₂O', 98.0665], ['kPa', 'Kilopascal', 1000], ['Pa', 'Pascal', 1], ['mbar', 'Millibar', 100], ['bar', 'Bar', 1e5], ['atm', 'Atmosphere', 101325], ['psi', 'psi', 6894.757293]]],
+  area: ['Area', [['cm2', 'Square centimetre', 1e-4], ['m2', 'Square metre', 1], ['km2', 'Square kilometre', 1e6], ['in2', 'Square inch', .00064516], ['ft2', 'Square foot', .09290304], ['yd2', 'Square yard', .83612736], ['ac', 'Acre', 4046.8564224], ['ha', 'Hectare', 1e4]]],
+  volume: ['Volume', [['ml', 'Millilitre', .001], ['l', 'Litre', 1], ['m3', 'Cubic metre', 1000], ['tsp', 'Teaspoon (US)', .00492892], ['tbsp', 'Tablespoon (US)', .0147868], ['floz', 'Fluid ounce (US)', .0295735], ['cup', 'Cup (US)', .236588], ['pt', 'Pint (US)', .473176], ['gal', 'Gallon (US)', 3.78541], ['galuk', 'Gallon (UK)', 4.54609]]],
+  speed: ['Speed', [['ms', 'Metre/second', 1], ['kmh', 'Kilometre/hour', 1 / 3.6], ['mph', 'Mile/hour', .44704], ['kn', 'Knot', .514444], ['fts', 'Foot/second', .3048]]],
+  time: ['Time', [['ms', 'Millisecond', .001], ['s', 'Second', 1], ['min', 'Minute', 60], ['h', 'Hour', 3600], ['d', 'Day', 86400], ['wk', 'Week', 604800], ['mo', 'Month (average)', 2629746], ['yr', 'Year', 31556952]]],
+  data: ['Data', [['bit', 'Bit', .125], ['B', 'Byte', 1], ['KB', 'Kilobyte', 1e3], ['MB', 'Megabyte', 1e6], ['GB', 'Gigabyte', 1e9], ['TB', 'Terabyte', 1e12], ['KiB', 'Kibibyte', 1024], ['MiB', 'Mebibyte', 1048576], ['GiB', 'Gibibyte', 1073741824]]],
+};
+const LAND = [['sqft', 'Square foot', 1], ['sqm', 'Square metre', 10.7639104], ['sqyd', 'Square yard', 9], ['ojut', 'Ojutangsho', 4.356], ['dec', 'Decimal (shotangsho)', 435.6], ['katha', 'Katha', 720], ['bigha', 'Bigha', 14400], ['acre', 'Acre', 43560], ['ha', 'Hectare', 107639.104]];
+const GOLD = [['g', 'Gram', 1], ['bhori', 'Bhori (tola)', 11.664], ['ana', 'Ana', .729], ['rati', 'Rati', .1215], ['point', 'Point', .01215], ['ozt', 'Troy ounce', 31.1034768], ['kg', 'Kilogram', 1000]];
+const CURRENCIES = [['BDT', 'Bangladeshi taka', 1], ['USD', 'US dollar', 122], ['EUR', 'Euro', 141], ['GBP', 'British pound', 162], ['INR', 'Indian rupee', 1.38], ['SAR', 'Saudi riyal', 32.5], ['AED', 'UAE dirham', 33.2], ['QAR', 'Qatari riyal', 33.5], ['KWD', 'Kuwaiti dinar', 398], ['OMR', 'Omani rial', 317], ['MYR', 'Malaysian ringgit', 29], ['SGD', 'Singapore dollar', 94], ['CAD', 'Canadian dollar', 87], ['AUD', 'Australian dollar', 80], ['JPY', 'Japanese yen', .81], ['CNY', 'Chinese yuan', 17.1], ['PKR', 'Pakistani rupee', .43]];
+const rates = () => S.rates || (S.rates = Object.fromEntries(CURRENCIES.map(c => [c[0], c[2]])));
+const convList = (units, value, from, fmtFn = sciNum) => {
+  const f = units.find(u => u[0] === from) || units[0];
+  const base = value * f[2];
+  return `<div class="ulist">${units.map(u => { const r = base / u[2]; return `<button type="button" class="urow ${u[0] === f[0] ? 'on' : ''}" data-copy="${plain(r, 8)}"><span>${u[1]}</span><b>${fmtFn(r)}</b></button>`; }).join('')}</div>`;
+};
+
+/* ---------- dates ---------- */
+const pad = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const pd = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? new Date(+m[1], m[2] - 1, +m[3]) : null; };
+const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const dayDiff = (a, b) => Math.round((Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) - Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 864e5);
+function ymd(a, b) {
+  let y = b.getFullYear() - a.getFullYear(), m = b.getMonth() - a.getMonth(), d = b.getDate() - a.getDate();
+  if (d < 0) { m--; d += new Date(b.getFullYear(), b.getMonth(), 0).getDate(); }
+  if (m < 0) { y--; m += 12; }
+  return { y, m, d };
+}
+const plural = (n, w) => `${nf2(n, 0)} ${w}${n === 1 ? '' : 's'}`;
+const ymdStr = o => [o.y && plural(o.y, 'year'), o.m && plural(o.m, 'month'), (o.d || (!o.y && !o.m)) && plural(o.d, 'day')].filter(Boolean).join(', ');
+const longDate = d => d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+/* ---------- calculators ---------- */
+const MOUNT = {
+  basic: b => mountKeypad('basic', b),
+  sci: b => mountKeypad('sci', b),
+
+  percent(b) {
+    F = 'percent';
+    mountForm('percent', b, `
+      ${panel('What is X% of Y?', `<div class="row2">${nf('a1', 'Percent', '15', { suf: '%' })}${nf('b1', 'Of', '2400')}</div><div id="o1"></div>`)}
+      ${panel('X is what % of Y?', `<div class="row2">${nf('a2', 'Value', '300')}${nf('b2', 'Out of', '1200')}</div><div id="o2"></div>`)}
+      ${panel('Percentage change', `<div class="row2">${nf('a3', 'From', '800')}${nf('b3', 'To', '1000')}</div><div id="o3"></div>`)}
+      ${panel('Add or remove a percentage', `<div class="row2">${nf('a4', 'Amount', '5000')}${nf('b4', 'Percent', '15', { suf: '%' })}</div><div id="o4"></div>`)}
+      <p class="note">Tip: fields accept sums too, such as 1200+350.</p>`, (v, body) => {
+      const [a1, b1, a2, b2, a3, b3, a4, b4] = ['a1', 'b1', 'a2', 'b2', 'a3', 'b3', 'a4', 'b4'].map(k => num(v[k]));
+      const r1 = a1 != null && b1 != null ? a1 * b1 / 100 : null;
+      $('#o1', body).innerHTML = ires(`${nf2(a1, 4)}% of ${nf2(b1, 4)}`, sciNum(r1), plain(r1));
+      const r2 = a2 != null && b2 ? a2 / b2 * 100 : null;
+      $('#o2', body).innerHTML = ires(`${nf2(a2, 4)} out of ${nf2(b2, 4)}`, r2 == null ? '—' : nf2(r2, 4) + '%', plain(r2, 4));
+      const r3 = a3 && b3 != null ? (b3 - a3) / Math.abs(a3) * 100 : null;
+      $('#o3', body).innerHTML = r3 == null ? ires('Change', '—') : ires(r3 >= 0 ? 'Increase' : 'Decrease', `<span class="${r3 >= 0 ? 'good' : 'bad'}">${r3 >= 0 ? '+' : '−'}${nf2(Math.abs(r3), 4)}%</span>`, plain(r3, 4)) + res('Difference', sciNum(b3 - a3), plain(b3 - a3));
+      if (a4 != null && b4 != null) {
+        const up = a4 * (1 + b4 / 100), down = a4 * (1 - b4 / 100);
+        $('#o4', body).innerHTML = res(`Plus ${nf2(b4, 4)}%`, sciNum(up), plain(up)) + res(`Minus ${nf2(b4, 4)}%`, sciNum(down), plain(down)) + res(`${nf2(b4, 4)}% of amount`, sciNum(a4 * b4 / 100), plain(a4 * b4 / 100));
+      } else $('#o4', body).innerHTML = '';
+    });
+  },
+
+  discount(b) {
+    F = 'discount';
+    mountForm('discount', b, `
+      ${panel('Price', `<div class="row2">${nf('price', 'Original price', '2500', { pre: esc(S.cur) })}${nf('qty', 'Quantity', '1')}</div>`)}
+      ${panel('Discount', `${nf('d1', 'Discount', '20', { suf: '%' })}${chips('d1', [5, 10, 15, 20, 25, 30, 40, 50, 60, 70], '%')}${nf('d2', 'Extra discount on top (optional)', '', { suf: '%', ph: '0' })}`)}
+      ${panel('VAT or tax (optional)', `${nf('vat', 'Added after discount', '', { suf: '%', ph: '0' })}${chips('vat', [5, 7.5, 10, 15], '%')}`)}
+      ${panel('Breakdown', '<div id="out"></div>')}`, (v, body) => {
+      const p = num(v.price), q = num(v.qty) || 1, d1 = num(v.d1) || 0, d2 = num(v.d2) || 0, vat = num(v.vat) || 0;
+      if (p == null) { setBar('You pay', '—'); $('#out', body).innerHTML = '<p class="note">Enter a price to start.</p>'; return; }
+      const after = p * (1 - d1 / 100) * (1 - d2 / 100), vatAmt = after * vat / 100, each = after + vatAmt, total = each * q;
+      const saved = (p - after) * q, eff = p ? (1 - after / p) * 100 : 0;
+      setBar(q > 1 ? `You pay for ${nf2(q, 0)}` : 'You pay', money(total), plain(total, 2), `You save ${money(saved)} (${nf2(eff, 2)}% off)`);
+      $('#out', body).innerHTML =
+        res('Original price', money(p * q)) +
+        res('You save', money(saved), plain(saved, 2), 'good') +
+        res('Price after discount', money(after * q), plain(after * q, 2)) +
+        (vat ? res(`VAT ${nf2(vat, 2)}%`, money(vatAmt * q), plain(vatAmt * q, 2)) : '') +
+        (q > 1 ? res('Final price per item', money(each), plain(each, 2)) : '') +
+        (d2 ? res('Total discount', nf2(eff, 2) + '%') : '') +
+        res('Final total', money(total), plain(total, 2));
+    });
+  },
+
+  bill(b) {
+    F = 'bill';
+    mountForm('bill', b, `
+      ${panel('Bill', `${nf('bill', 'Bill amount', '3600', { pre: esc(S.cur) })}<div class="row2">${nf('tip', 'Tip', '10', { suf: '%' })}${nf('ppl', 'People', '4')}</div>${chips('tip', [0, 5, 10, 15, 20], '%')}`)}
+      ${panel('Rounding', seg('round', [['exact', 'Exact share'], ['up', 'Round up']], 'exact'))}
+      ${panel('Breakdown', '<div id="out"></div>')}`, (v, body) => {
+      const bill = num(v.bill), tip = num(v.tip) || 0, n = Math.max(1, Math.floor(num(v.ppl) || 1));
+      if (bill == null) { setBar('Each person pays', '—'); $('#out', body).innerHTML = ''; return; }
+      const tipAmt = bill * tip / 100, total = bill + tipAmt;
+      let each = total / n;
+      const up = v.round === 'up';
+      if (up) each = Math.ceil(each);
+      setBar('Each person pays', money(each), plain(each, 2), `${plural(n, 'person').replace('persons', 'people')} · total ${money(total)}`);
+      $('#out', body).innerHTML = res('Bill', money(bill)) + res(`Tip ${nf2(tip, 2)}%`, money(tipAmt), plain(tipAmt, 2)) + res('Total with tip', money(total), plain(total, 2)) +
+        res('Share per person', money(each), plain(each, 2)) + (up ? res('Collected after rounding', money(each * n)) + res('Extra (left as tip)', money(each * n - total), null, 'good') : '');
+    });
+  },
+
+  date(b) {
+    F = 'date';
+    const t = today(), later = new Date(t.getFullYear(), 11, 31);
+    mountForm('date', b, `
+      ${panel('', seg('mode', [['age', 'Age'], ['diff', 'Between dates'], ['add', 'Add days']], 'age'))}
+      ${panel('Age', `${df('dob', 'Date of birth', '1990-01-15')}${df('t_asof', 'Age on', iso(t))}`, { id: 'pAge' })}
+      ${panel('Between two dates', `<div class="row2">${df('t_from', 'From', iso(t))}${df('to', 'To', iso(later))}</div>${seg('wk', [['fs', 'Weekend Fri + Sat'], ['ss', 'Sat + Sun']], 'fs')}`, { id: 'pDiff' })}
+      ${panel('Add or subtract days', `${df('t_base', 'Start date', iso(t))}<div class="row2">${nf('days', 'Days', '90')}${seg('dir', [['add', 'Add'], ['sub', 'Subtract']], 'add')}</div>`, { id: 'pAdd' })}
+      ${panel('Details', '<div id="out"></div>')}`, (v, body) => {
+      const mode = v.mode || 'age';
+      $('#pAge', body).hidden = mode !== 'age'; $('#pDiff', body).hidden = mode !== 'diff'; $('#pAdd', body).hidden = mode !== 'add';
+      const out = $('#out', body);
+      if (mode === 'age') {
+        const a = pd(v.dob), d = pd(v.t_asof) || today();
+        if (!a) { setBar('Age', '—'); out.innerHTML = '<p class="note">Pick a date of birth.</p>'; return; }
+        if (a > d) { setBar('Age', '—'); out.innerHTML = '<p class="note bad">Date of birth is after the “Age on” date.</p>'; return; }
+        const o = ymd(a, d), days = dayDiff(a, d);
+        let nb = new Date(d.getFullYear(), a.getMonth(), a.getDate());
+        if (nb < d) nb = new Date(d.getFullYear() + 1, a.getMonth(), a.getDate());
+        const toNb = dayDiff(d, nb);
+        setBar('Age', `${o.y} years`, ymdStr(o), `${ymdStr(o)}`);
+        out.innerHTML = res('Exact age', ymdStr(o), ymdStr(o)) + res('In months', plural(o.y * 12 + o.m, 'month') + (o.d ? `, ${plural(o.d, 'day')}` : '')) +
+          res('In weeks', `${nf2(Math.floor(days / 7), 0)} weeks, ${days % 7} days`) + res('In days', nf2(days, 0) + ' days', String(days)) +
+          res('Born on', a.toLocaleDateString('en-GB', { weekday: 'long' })) + res('Next birthday', toNb === 0 ? 'Today 🎂' : `in ${plural(toNb, 'day')} · ${nb.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}`);
+      } else if (mode === 'diff') {
+        let a = pd(v.t_from), c = pd(v.to);
+        if (!a || !c) { setBar('Difference', '—'); out.innerHTML = ''; return; }
+        const neg = c < a; if (neg) [a, c] = [c, a];
+        const o = ymd(a, c), days = dayDiff(a, c);
+        const off = v.wk === 'ss' ? [0, 6] : [5, 6];
+        let work = 0;
+        if (days <= 40000) for (let i = 0; i < days; i++) { const x = new Date(a.getFullYear(), a.getMonth(), a.getDate() + i); if (!off.includes(x.getDay())) work++; }
+        setBar('Days between', nf2(days, 0) + ' days', String(days), ymdStr(o) + (neg ? ' (dates swapped)' : ''));
+        out.innerHTML = res('Years, months, days', ymdStr(o)) + res('Total days', nf2(days, 0), String(days)) + res('Weeks', `${nf2(Math.floor(days / 7), 0)} weeks, ${days % 7} days`) +
+          res('Working days', nf2(work, 0), String(work)) + res('Total hours', nf2(days * 24, 0)) + '<p class="note" style="padding-top:8px">The end date is not counted. Working days skip the chosen weekend only, not public holidays.</p>';
+      } else {
+        const a = pd(v.t_base) || today(), n = Math.round(num(v.days) || 0) * (v.dir === 'sub' ? -1 : 1);
+        const r = new Date(a.getFullYear(), a.getMonth(), a.getDate() + n);
+        setBar(n >= 0 ? `${plural(Math.abs(n), 'day')} later` : `${plural(Math.abs(n), 'day')} earlier`, r.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }), iso(r), r.toLocaleDateString('en-GB', { weekday: 'long' }));
+        out.innerHTML = res('Result date', longDate(r), iso(r)) + res('Start date', longDate(a)) + res('Weeks', `${nf2(Math.floor(Math.abs(n) / 7), 0)} weeks, ${Math.abs(n) % 7} days`);
+      }
+    });
+  },
+
+  unit(b) {
+    F = 'unit';
+    const cat = gv('cat', 'length');
+    mountForm('unit', b, `
+      ${panel('', `<div class="chips" style="margin:0;padding:0">${Object.entries(UNITS).map(([k, [n]]) => `<button type="button" data-cat="${k}" class="${k === cat ? 'on' : ''}">${n}</button>`).join('')}</div>`)}
+      ${panel('Convert', `<div class="row2">${nf('val', 'Value', '1')}<label class="fld"><span class="fl">From</span><span class="fi sel"><select id="ufrom"></select></span></label></div>`)}
+      ${panel('Results', '<div id="out"></div><p class="note">Tap a row to copy it.</p>')}`, (v, body) => {
+      const c = inputs('unit').cat || 'length', [name, list] = UNITS[c];
+      const sel = $('#ufrom', body);
+      if (sel.dataset.cat !== c) {
+        sel.innerHTML = list.map(u => `<option value="${u[0]}">${u[1]}</option>`).join('');
+        sel.dataset.cat = c;
+        sel.value = inputs('unit')['from_' + c] || list[c === 'length' ? 2 : c === 'weight' ? 2 : 0][0];
+      }
+      inputs('unit')['from_' + c] = sel.value; save();
+      const x = num(v.val);
+      const out = $('#out', body);
+      if (x == null) { setBar(name, '—'); out.innerHTML = ''; return; }
+      if (c === 'temp') {
+        const f = sel.value, C = f === 'C' ? x : f === 'F' ? (x - 32) * 5 / 9 : x - 273.15;
+        const vals = { C, F: C * 9 / 5 + 32, K: C + 273.15 };
+        out.innerHTML = `<div class="ulist">${list.map(u => `<button type="button" class="urow ${u[0] === f ? 'on' : ''}" data-copy="${plain(vals[u[0]], 4)}"><span>${u[1]}</span><b>${nf2(vals[u[0]], 4)} ${u[0] === 'K' ? 'K' : '°' + u[0]}</b></button>`).join('')}</div>`;
+        const other = f === 'C' ? 'F' : 'C';
+        setBar(`${nf2(x, 4)} °${f} =`, `${nf2(vals[other], 2)} °${other}`, plain(vals[other], 4));
+        return;
+      }
+      out.innerHTML = convList(list, x, sel.value);
+      const fu = list.find(u => u[0] === sel.value);
+      const pick = { length: ['m', 'ft'], weight: ['kg', 'lb'], pressure: ['mmHg', 'kPa'], area: ['m2', 'ft2'], volume: ['l', 'ml'], speed: ['kmh', 'mph'], time: ['h', 'min'], data: ['MB', 'GB'] }[c];
+      const to = list.find(u => u[0] === (pick[0] === sel.value ? pick[1] : pick[0]));
+      const r = x * fu[2] / to[2];
+      setBar(`${nf2(x, 6)} ${fu[1].toLowerCase()} =`, `${sciNum(r)} ${({ m: 'm', ft: 'ft', kg: 'kg', lb: 'lb', mmHg: 'mmHg', kPa: 'kPa', m2: 'm²', ft2: 'ft²', l: 'L', ml: 'mL', kmh: 'km/h', mph: 'mph', h: 'hours', min: 'minutes', MB: 'MB', GB: 'GB' })[to[0]] || to[1]}`, plain(r, 8));
+    }, {
+      onClick(e, run) {
+        const cb = e.target.closest('[data-cat]');
+        if (cb) { inputs('unit').cat = cb.dataset.cat; $$('[data-cat]', b).forEach(x => x.classList.toggle('on', x === cb)); run(); }
+      },
+    });
+  },
+
+  currency(b) {
+    F = 'currency';
+    const MAIN = ['BDT', 'USD', 'PKR', 'INR', 'CAD', 'AUD'];
+    const cname2 = code => (CURRENCIES.find(c => c[0] === code) || [, code])[1];
+    const others = CURRENCIES.filter(c => !MAIN.includes(c[0]));
+    const optHtml = (k, def) => {
+      const v = gv(k, def), o = code => `<option value="${code}"${code === v ? ' selected' : ''}>${code} · ${esc(cname2(code))}</option>`;
+      return `<label class="fld"><span class="fl">${k === 'from' ? 'From' : 'To'}</span><span class="fi sel"><select data-k="${k}"><optgroup label="Main">${MAIN.map(o).join('')}</optgroup><optgroup label="Others">${others.map(c => o(c[0])).join('')}</optgroup></select></span></label>`;
+    };
+    const fr = x => (x > 0 && isFinite(x)) ? String(+x.toPrecision(6)) : '';
+    const rateRow = code => `<div class="rrow"><div class="rn">${code} <small>${esc(cname2(code))}</small></div><div class="row2">
+      <label class="fld"><span class="fl">1 ${code} =</span><span class="fi"><input data-rate="${code}" data-dir="to" type="text" inputmode="decimal" autocomplete="off" value="${fr(rates()[code])}"><b class="aff">BDT</b></span></label>
+      <label class="fld"><span class="fl">1 BDT =</span><span class="fi"><input data-rate="${code}" data-dir="from" type="text" inputmode="decimal" autocomplete="off" value="${fr(1 / rates()[code])}"><b class="aff">${code}</b></span></label></div></div>`;
+    let editingOthers = false;
+    const drawRates = () => {
+      $('#mainRates', b).innerHTML = MAIN.filter(c => c !== 'BDT').map(rateRow).join('');
+      const box = $('#rbox', b); box.hidden = !editingOthers;
+      box.innerHTML = editingOthers ? others.map(c => rateRow(c[0])).join('') : '';
+    };
+    const listHtml = (codes, a, from, to) => `<div class="ulist">${codes.map(code => { const x = a * rates()[from] / rates()[code]; return `<button type="button" class="urow ${code === to ? 'on' : ''}" data-copy="${plain(x, 4)}"><span>${code} · ${esc(cname2(code))}</span><b>${nf2(x, x < 1 ? 4 : 2)}</b></button>`; }).join('')}</div>`;
+    mountForm('currency', b, `
+      ${panel('Convert', `${nf('amt', 'Amount', '100')}<div class="row3">${optHtml('from', 'USD')}<button class="swap" type="button" id="swap" aria-label="Swap currencies">${I.swap}</button>${optHtml('to', 'BDT')}</div>`)}
+      ${panel('Main currencies', '<div id="outMain"></div>')}
+      ${panel('Your rates', `<p class="note" id="rnote"></p><div id="mainRates"></div>
+        <div class="btn-row"><button class="btn" type="button" id="rFetch">${I.cloud}Update online</button><button class="btn" type="button" id="rReset">Use sample rates</button></div>
+        <p class="note">Type the rate in either box, whichever way your bank or money changer quotes it. Your rates stay until you tap Update online.</p>`)}
+      ${panel('Other currencies', `<div id="outOther"></div><div class="btn-row"><button class="btn" type="button" id="rEdit">${I.pencil}Edit other rates</button></div><div id="rbox" hidden></div>`)}`, (v, body) => {
+      const a = num(v.amt);
+      $('#rnote', body).textContent = S.ratesDate ? `Rates ${S.ratesDate}.` : 'Sample rates for now. Set your own below or tap Update online.';
+      if (!$('#mainRates', body).innerHTML) drawRates();
+      if (a == null) { setBar('Result', '—'); $('#outMain', body).innerHTML = ''; $('#outOther', body).innerHTML = ''; return; }
+      const r = a * rates()[v.from] / rates()[v.to];
+      setBar(`${nf2(a, 4)} ${v.from} =`, `${nf2(r, r < 1 ? 4 : 2)} ${v.to}`, plain(r, 4), `1 ${v.from} = ${fr(rates()[v.from] / rates()[v.to])} ${v.to}`);
+      $('#outMain', body).innerHTML = listHtml(MAIN, a, v.from, v.to);
+      $('#outOther', body).innerHTML = listHtml(others.map(c => c[0]), a, v.from, v.to);
+    }, {
+      onInput(e) {
+        const t = e.target;
+        if (!t.dataset.rate) return;
+        const n = num(t.value);
+        if (!(n > 0)) return false;
+        const code = t.dataset.rate, bdt = t.dataset.dir === 'to' ? n : 1 / n;
+        rates()[code] = bdt;
+        const other = $(`[data-rate="${code}"][data-dir="${t.dataset.dir === 'to' ? 'from' : 'to'}"]`, b);
+        if (other) other.value = fr(t.dataset.dir === 'to' ? 1 / bdt : bdt);
+        S.ratesDate = 'set by you on ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        save();
+      },
+      onClick(e, run) {
+        const t = e.target.closest('button'); if (!t) return;
+        if (t.id === 'swap') { const f = $('[data-k="from"]', b), to = $('[data-k="to"]', b); [f.value, to.value] = [to.value, f.value]; run(); }
+        if (t.id === 'rEdit') { editingOthers = !editingOthers; drawRates(); t.innerHTML = editingOthers ? `${I.check}Done` : `${I.pencil}Edit other rates`; }
+        if (t.id === 'rReset') { S.rates = null; S.ratesDate = ''; save(); drawRates(); run(); toast('Sample rates restored'); }
+        if (t.id === 'rFetch') {
+          t.disabled = true; t.textContent = 'Updating…';
+          fetch('https://open.er-api.com/v6/latest/BDT').then(r => r.json()).then(d => {
+            if (!d || !d.rates) throw 0;
+            const R = rates(); CURRENCIES.forEach(c => { if (d.rates[c[0]]) R[c[0]] = +(1 / d.rates[c[0]]).toPrecision(6); });
+            S.ratesDate = 'updated online on ' + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); save();
+            drawRates(); run(); toast('Rates updated');
+          }).catch(() => toast("Couldn't reach the rate service. Check your internet, or type the rates yourself.")).finally(() => { t.disabled = false; t.innerHTML = `${I.cloud}Update online`; });
+        }
+      },
+    });
+  },
+
+  emi(b) {
+    F = 'emi';
+    mountForm('emi', b, `
+      ${panel('Loan', `${nf('p', 'Loan amount', '500000', { pre: esc(S.cur) })}<div class="row2">${nf('r', 'Interest per year', '9', { suf: '%' })}${nf('n', 'Tenure', '5')}</div>${seg('unit', [['y', 'Years'], ['m', 'Months']], 'y')}`)}
+      ${panel('Summary', '<div id="out"></div>')}
+      ${panel('Year by year', '<div class="tbl-wrap" id="tbl"></div>')}`, (v, body) => {
+      const P = num(v.p), R = num(v.r) || 0, N0 = num(v.n);
+      if (!P || !N0) { setBar('Monthly EMI', '—'); $('#out', body).innerHTML = ''; $('#tbl', body).innerHTML = ''; return; }
+      const n = Math.max(1, Math.round(v.unit === 'm' ? N0 : N0 * 12)), r = R / 1200;
+      const emi = r ? P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1) : P / n;
+      const total = emi * n, int = total - P, pi = P / total * 100;
+      setBar('Monthly EMI', money(emi), plain(emi, 2), `${n} months · total interest ${money(int, 0)}`);
+      $('#out', body).innerHTML = res('Monthly EMI', money(emi), plain(emi, 2)) + res('Total interest', money(int), plain(int, 2), 'bad') + res('Total payment', money(total), plain(total, 2)) + res('Number of months', String(n)) +
+        `<div class="split" style="margin-top:6px"><i style="width:${pi}%;background:var(--eq)"></i><i style="width:${100 - pi}%;background:var(--op)"></i></div>
+        <div class="legend"><span><i style="background:var(--eq)"></i>Principal ${nf2(pi, 1)}%</span><span><i style="background:var(--op)"></i>Interest ${nf2(100 - pi, 1)}%</span></div>`;
+      let bal = P, rows = '', yp = 0, yi = 0;
+      for (let m = 1; m <= n; m++) {
+        const ii = bal * r, pp = emi - ii; bal = Math.max(0, bal - pp); yp += pp; yi += ii;
+        if (m % 12 === 0 || m === n) { rows += `<tr><td>Year ${Math.ceil(m / 12)}</td><td>${nf2(yp, 0)}</td><td>${nf2(yi, 0)}</td><td>${nf2(bal, 0)}</td></tr>`; yp = yi = 0; }
+        if (m > 600) break;
+      }
+      $('#tbl', body).innerHTML = `<table class="tbl"><thead><tr><th>Year</th><th>Principal</th><th>Interest</th><th>Balance</th></tr></thead><tbody>${rows}</tbody></table>`;
+    });
+  },
+
+  interest(b) {
+    F = 'interest';
+    mountForm('interest', b, `
+      ${panel('', seg('mode', [['c', 'Compound'], ['s', 'Simple']], 'c'))}
+      ${panel('Deposit', `${nf('p', 'Principal', '100000', { pre: esc(S.cur) })}<div class="row2">${nf('r', 'Rate per year', '8', { suf: '%' })}${nf('t', 'Time', '5', { suf: 'years' })}</div>
+        ${sf('f', 'Compounded', [['1', 'Yearly'], ['2', 'Half-yearly'], ['4', 'Quarterly'], ['12', 'Monthly'], ['365', 'Daily']], '12', { id: 'fFreq' })}`)}
+      ${panel('Result', '<div id="out"></div>')}
+      ${panel('Growth by year', '<div class="tbl-wrap" id="tbl"></div>', { id: 'pTbl' })}`, (v, body) => {
+      const P = num(v.p), R = num(v.r) || 0, t = num(v.t), comp = v.mode !== 's', f = +v.f || 12;
+      $('#fFreq', body).hidden = !comp;
+      if (!P || t == null) { setBar('Maturity amount', '—'); $('#out', body).innerHTML = ''; $('#tbl', body).innerHTML = ''; return; }
+      const amt = y => comp ? P * Math.pow(1 + R / 100 / f, f * y) : P * (1 + R / 100 * y);
+      const A = amt(t), I0 = A - P;
+      setBar('Maturity amount', money(A), plain(A, 2), `Interest earned ${money(I0)}`);
+      $('#out', body).innerHTML = res('Principal', money(P)) + res('Interest earned', money(I0), plain(I0, 2), 'good') + res('Maturity amount', money(A), plain(A, 2)) +
+        (comp ? res('Effective yearly rate', nf2((Math.pow(1 + R / 100 / f, f) - 1) * 100, 3) + '%') : res('Interest per year', money(P * R / 100)));
+      let rows = '';
+      for (let y = 1; y <= Math.min(Math.ceil(t), 50); y++) { const yy = Math.min(y, t), a = amt(yy); rows += `<tr><td>Year ${nf2(yy, 2)}</td><td>${nf2(a - P, 0)}</td><td>${nf2(a, 0)}</td></tr>`; }
+      $('#tbl', body).innerHTML = `<table class="tbl"><thead><tr><th>Year</th><th>Interest</th><th>Balance</th></tr></thead><tbody>${rows}</tbody></table>`;
+    });
+  },
+
+  profit(b) {
+    F = 'profit';
+    mountForm('profit', b, `
+      ${panel('', seg('mode', [['check', 'Check profit'], ['price', 'Set a price']], 'check'))}
+      ${panel('Cost and price', `<div class="row2">${nf('cost', 'Cost price', '800', { pre: esc(S.cur) })}${nf('sell', 'Selling price', '1200', { pre: esc(S.cur) })}</div>${nf('qty', 'Quantity', '1')}`, { id: 'pCheck' })}
+      ${panel('Target', `${nf('cost2', 'Cost price', '800', { pre: esc(S.cur) })}<div class="row2">${nf('pct', 'Target', '30', { suf: '%' })}${seg('basis', [['margin', 'Margin'], ['markup', 'Markup']], 'margin')}</div>`, { id: 'pPrice' })}
+      ${panel('Result', '<div id="out"></div><p class="note" style="padding-top:8px">Margin is profit as a share of the selling price. Markup is profit as a share of the cost.</p>')}`, (v, body) => {
+      const check = v.mode !== 'price';
+      $('#pCheck', body).hidden = !check; $('#pPrice', body).hidden = check;
+      const out = $('#out', body);
+      if (check) {
+        const c = num(v.cost), s = num(v.sell), q = num(v.qty) || 1;
+        if (c == null || s == null) { setBar('Profit', '—'); out.innerHTML = ''; return; }
+        const p = s - c, gain = p >= 0;
+        setBar(gain ? 'Profit' : 'Loss', money(Math.abs(p * q)), plain(p * q, 2), s ? `Margin ${nf2(p / s * 100, 2)}% · markup ${c ? nf2(p / c * 100, 2) + '%' : '—'}` : '');
+        out.innerHTML = res(gain ? 'Profit per item' : 'Loss per item', money(Math.abs(p)), plain(p, 2), gain ? 'good' : 'bad') + (q > 1 ? res(`Total for ${nf2(q, 0)}`, money(p * q), plain(p * q, 2), gain ? 'good' : 'bad') : '') +
+          res('Margin', s ? nf2(p / s * 100, 2) + '%' : '—') + res('Markup', c ? nf2(p / c * 100, 2) + '%' : '—') + res('Total sales', money(s * q)) + res('Total cost', money(c * q));
+      } else {
+        const c = num(v.cost2), t = num(v.pct);
+        if (c == null || t == null) { setBar('Selling price', '—'); out.innerHTML = ''; return; }
+        if (v.basis === 'margin' && t >= 100) { setBar('Selling price', '—'); out.innerHTML = '<p class="note bad">Margin must be below 100%.</p>'; return; }
+        const s = v.basis === 'margin' ? c / (1 - t / 100) : c * (1 + t / 100), p = s - c;
+        setBar('Selling price', money(s), plain(s, 2), `Profit ${money(p)} per item`);
+        out.innerHTML = res('Selling price', money(s), plain(s, 2)) + res('Profit per item', money(p), plain(p, 2), 'good') + res('Margin', nf2(p / s * 100, 2) + '%') + res('Markup', c ? nf2(p / c * 100, 2) + '%' : '—');
+      }
+    });
+  },
+
+  land(b) {
+    F = 'land';
+    mountForm('land', b, `
+      ${panel('Area', `<div class="row2">${nf('val', 'Value', '10')}${sf('from', 'Unit', LAND.map(u => [u[0], u[1]]), 'dec')}</div>`)}
+      ${panel('In every unit', '<div id="out"></div><p class="note">1 decimal = 435.6 sq ft · 1 katha = 720 sq ft · 1 bigha = 20 katha · 1 acre = 100 decimal. Some districts use different local measures.</p>')}`, (v, body) => {
+      const x = num(v.val);
+      if (x == null) { setBar('Area', '—'); $('#out', body).innerHTML = ''; return; }
+      const f = LAND.find(u => u[0] === v.from) || LAND[4], sqft = x * f[2];
+      setBar(`${nf2(x, 4)} ${f[1].replace(' (shotangsho)', '')} =`, `${nf2(sqft, 2)} sq ft`, plain(sqft, 4), `${nf2(sqft / 720, 3)} katha · ${nf2(sqft / 435.6, 3)} decimal`);
+      $('#out', body).innerHTML = convList(LAND, x, v.from, n => nf2(n, 4));
+    });
+  },
+
+  gold(b) {
+    F = 'gold';
+    mountForm('gold', b, `
+      ${panel('Weight', `<div class="row2">${nf('w', 'Weight', '1')}${sf('u', 'Unit', GOLD.map(u => [u[0], u[1]]), 'bhori')}</div>`)}
+      ${panel('Value (optional)', `${nf('price', 'Price per bhori', '', { pre: esc(S.cur), ph: 'your jeweller’s rate' })}${nf('make', 'Making charge', '', { suf: '%', ph: '0' })}`)}
+      ${panel('In every unit', '<div id="out"></div><p class="note">1 bhori = 11.664 g = 16 ana · 1 ana = 6 rati · 1 rati = 10 point.</p>')}`, (v, body) => {
+      const w = num(v.w);
+      if (w == null) { setBar('Weight', '—'); $('#out', body).innerHTML = ''; return; }
+      const f = GOLD.find(u => u[0] === v.u) || GOLD[1], g = w * f[2];
+      let pts = Math.round(g / .01215 * 100) / 100;
+      const bh = Math.floor(pts / 960); pts -= bh * 960;
+      const an = Math.floor(pts / 60); pts -= an * 60;
+      const ra = Math.floor(pts / 10); pts -= ra * 10;
+      const parts = [bh && `${bh} bhori`, an && `${an} ana`, ra && `${ra} rati`, pts && `${nf2(pts, 1)} point`].filter(Boolean).join(' ') || '0';
+      const price = num(v.price), mk = num(v.make) || 0;
+      if (price) {
+        const val = g / 11.664 * price, total = val * (1 + mk / 100);
+        setBar('Gold value', money(total, 0), plain(total, 0), `${nf2(g, 3)} g · ${parts}`);
+      } else setBar('Weight in grams', `${nf2(g, 3)} g`, plain(g, 4), parts);
+      $('#out', body).innerHTML = res('Traditional', parts, parts) +
+        (price ? res('Gold value', money(g / 11.664 * price, 0), plain(g / 11.664 * price, 0)) + (mk ? res(`Making charge ${nf2(mk, 2)}%`, money(g / 11.664 * price * mk / 100, 0)) : '') + res('Price per gram', money(price / 11.664)) : '') +
+        convList(GOLD, w, v.u, n => nf2(n, 4));
+    });
+  },
+};
+
+/* ---------- start ---------- */
+applyTheme();
+applyFonts();
+renderGrid();
+try { history.replaceState({ home: 1 }, ''); } catch (e) { }
+})();
+
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
